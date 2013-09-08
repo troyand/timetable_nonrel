@@ -1,5 +1,7 @@
 *.log
 *.pot
 *.pyc
+*.swp
+*.sqlite
 local_settings.py
 venv
