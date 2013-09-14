@@ -1,9 +1,12 @@
 <script>
+function serializeLessons() {
+}
+
 $(document).ready(function() {
     var items = {{ items|safe}};
     $.each(items, function(i, item) {
-        var divId = "#lessons-" + item.day_number + "-" + item.lesson_number;
-        var formClone = $("#clonable-lesson").clone().show();
+        var divId = "#items-" + item.day_number + "-" + item.lesson_number;
+        var formClone = $("#clonable-item").clone().show();
         formClone.find(".room").val(item.room);
         formClone.find(".discipline").val(item.discipline);
         formClone.find(".group").val(item.group);

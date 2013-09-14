@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load staticfiles %}
 {% block body %}
-    <form class="form-inline lesson" style="display:none" id="clonable-lesson">
+    <form class="form-inline item" style="display:none" id="clonable-item">
         <input class="form-control room" style="width:100px" placeholder="Аудиторія">
         <input class="form-control discipline" style="width:320px" placeholder="Предмет" required>
         <input class="form-control group" style="width:80px" placeholder="Група" type="text">
@@ -20,7 +20,7 @@
                         {{ lesson_time }}
                     </td>
                     <td>
-                        <div id="lessons-{{ day_number }}-{{ lesson_number }}">
+                        <div id="items-{{ day_number }}-{{ lesson_number }}">
                         </div>
                         <div><button type="button" class="add-lesson btn btn-success" onclick="addLesson(this);">Додати пару</button></div>
                     </td>
