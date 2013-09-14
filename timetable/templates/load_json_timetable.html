@@ -1,12 +1,26 @@
 <script>
-function serializeLessons() {
+function serializeItems() {
+    var result = [];
+    $.each($(".item"), function(i, formItem) {
+        var item = {};
+        var itemElement = $(formItem);    
+        var divId = itemElement.parent().attr("id");
+        var idParts = divId.split("-");
+        item["day_number"] = parseInt(idParts[1]);
+        item["lesson_number"] = parseInt(idParts[2]);
+        $.each(["room", "discipline", "group", "lecturer", "weeks"], function(j, field) {
+            item[field] = itemElement.find("." + field).val();
+        });
+        result.push(item);
+    });
+    console.log(JSON.stringify(result));
 }
 
 $(document).ready(function() {
     var items = {{ items|safe}};
     $.each(items, function(i, item) {
         var divId = "#items-" + item.day_number + "-" + item.lesson_number;
-        var formClone = $("#clonable-item").clone().show();
+        var formClone = $("#clonable-item").clone().show().addClass("item").attr("id", "");
         formClone.find(".room").val(item.room);
         formClone.find(".discipline").val(item.discipline);
         formClone.find(".group").val(item.group);
@@ -14,5 +28,6 @@ $(document).ready(function() {
         formClone.find(".weeks").val(item.weeks);
         $(divId).append(formClone);
     });
+    serializeItems();
 });
 </script>
