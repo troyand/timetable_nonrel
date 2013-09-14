@@ -1,0 +1,16 @@
+body {
+  padding-top: 50px;
+}
+.starter-template {
+  padding: 40px 15px;
+  text-align: center;
+}
+.form-inline {
+    padding-bottom: 10px;
+}
+.day-name {
+    width: 60px;
+}
+.lesson-time {
+    width: 120px;
+}

@@ -6,16 +6,6 @@ from django.db import models
 from django.utils.encoding import smart_str
 
 
-lesson_times = {
-    1: u'8:30-9:50',
-    2: u'10:00-11:20',
-    3: u'11:40-13:00',
-    4: u'13:30-14:50',
-    5: u'15:00-16:20',
-    6: u'16:30-17:50',
-    7: u'18:00-19:20',
-}
-
 day_names = {
         1: u'Пн',
         2: u'Вт',
@@ -26,6 +16,16 @@ day_names = {
         7: u'Нд',
         }
 
+
+lesson_times = {
+    1: u'08:30-09:50',
+    2: u'10:00-11:20',
+    3: u'11:40-13:00',
+    4: u'13:30-14:50',
+    5: u'15:00-16:20',
+    6: u'16:30-17:50',
+    7: u'18:00-19:20',
+}
 
 
 class University(models.Model):
@@ -105,6 +105,21 @@ class AcademicTerm(models.Model):
                     self.week_number,
                     self.academic_term
                 ))
+
+    def expand_weeks(self, weeks):
+        result = []
+        for part in weeks.split(','):
+            if '-' in part:
+                result += range(
+                        int(part.split('-')[0]),
+                        int(part.split('-')[1]) + 1
+                        )
+            else:
+                result += [int(part)]
+        if self.tcp_week in result:
+            result.remove(self.tcp_week)
+        return result
+
     university = models.ForeignKey(University)
     year = models.IntegerField()
     kind = models.CharField(max_length=16, choices=ACADEMIC_TERMS)
@@ -168,3 +183,14 @@ class TimetableItem(models.Model):
     group = models.CharField(max_length=32, null=True, blank=True)
     lecturer = models.CharField(max_length=64, null=True, blank=True)
     weeks = models.CharField(max_length=64)
+
+    def __unicode__(self):
+        return u'%s %s [%s] %s - %s / %s [%s]' % (
+                self.get_day_number_display(),
+                self.get_lesson_number_display(),
+                self.room,
+                self.discipline,
+                self.group or u'лекція',
+                self.lecturer,
+                self.weeks,
+                )

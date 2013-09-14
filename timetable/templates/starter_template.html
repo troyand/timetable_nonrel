@@ -1,59 +1,10 @@
+{% extends "base.html" %}
 {% load staticfiles %}
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="">
-    <meta name="author" content="">
-
-    <title>Starter Template for Bootstrap</title>
-
-    <!-- Bootstrap core CSS -->
-    <link href="{% static "css/bootstrap.css" %}" rel="stylesheet">
-
-    <!-- Custom styles for this template -->
-    <link href="{% static "css/starter-template.css" %}" rel="stylesheet">
-    <script src="{% static "js/jquery.js" %}"></script>
-    <script src="{% static "js/bootstrap.js" %}"></script>
-    <script src="{% static "js/timetable.js" %}"></script>
-  </head>
-
-  <body>
-
-    <div class="navbar navbar-inverse navbar-fixed-top">
-      <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="#">Project name</a>
-        </div>
-        <div class="collapse navbar-collapse">
-          <ul class="nav navbar-nav">
-            <li class="active"><a href="#">Home</a></li>
-            <li><a href="#about">About</a></li>
-            <li><a href="#contact">Contact</a></li>
-          </ul>
-        </div><!--/.nav-collapse -->
-      </div>
-    </div>
-
-    <div class="container">
-
-      <div class="starter-template">
-        <h1>Bootstrap starter template</h1>
-        <p class="lead">Use this document as a way to quickly start any new project.<br> All you get is this text and a mostly barebones HTML document.</p>
-      </div>
-
-    </div><!-- /.container -->
-
+{% block body %}
     <form class="form-inline" style="display:none" id="clonable-lesson">
         <input class="form-control room" style="width:100px" placeholder="Аудиторія">
         <input class="form-control discipline" style="width:320px" placeholder="Предмет" required>
-        <input class="form-control group" style="width:80px" placeholder="Група" pattern="[0-9.]+" type="text">
+        <input class="form-control group" style="width:80px" placeholder="Група" type="text">
         <input class="form-control lecturer" style="width:200px" placeholder="Викладач">
         <input class="form-control weeks" style="width:160px" placeholder="Тижні" onkeypress="return validateWeeksInputKey(event);">
         <button type="button" class="btn btn-danger" onclick="deleteLesson(this);" tabindex="-1">Видалити</button>
@@ -69,12 +20,22 @@
                         {{ lesson_time }}
                     </td>
                     <td>
+                        {% with items=day_lesson_items|lookup:day_number|lookup:lesson_number %}
+                            {% for item in items %}
+    <form class="form-inline" id="clonable-lesson">
+        <input class="form-control room" style="width:100px" placeholder="Аудиторія" value="{{ item.room }}">
+        <input class="form-control discipline" style="width:320px" placeholder="Предмет" required value="{{ item.discipline }}">
+        <input class="form-control group" style="width:80px" placeholder="Група" type="text" value="{{ item.group|default_if_none:'' }}">
+        <input class="form-control lecturer" style="width:200px" placeholder="Викладач" value="{{ item.lecturer }}">
+        <input class="form-control weeks" style="width:160px" placeholder="Тижні" onkeypress="return validateWeeksInputKey(event);" value="{{ item.weeks }}">
+        <button type="button" class="btn btn-danger" onclick="deleteLesson(this);" tabindex="-1">Видалити</button>
+    </form>
+                            {% endfor %}
+                        {% endwith %}
                         <div><button type="button" class="add-lesson btn btn-success" onclick="addLesson(this);">Додати пару</button></div>
                     </td>
                 </tr>
             {% endfor %}
         {% endfor %}
     </table>
-
-  </body>
-</html>
+{% endblock %}

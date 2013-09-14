@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block body %}
+    <h1>{{ timetable }}</h1>
+    <form method="POST" class="form-inline" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" class="form-control" style="width:300px" name="csv_file">
+        <input type="submit" class="form-control btn-primary" style="width:100px">
+    </form>
+{% endblock %}

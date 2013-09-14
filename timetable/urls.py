@@ -7,6 +7,9 @@ from django.conf.urls import patterns, include, url
 urlpatterns = patterns('',
     # Examples:
     # url(r'^$', 'timetable.views.home', name='home'),
+    url(r'^edit/(?P<timetable_id>\d+)/$', 'timetable.university.views.edit_timetable', name='edit_timetable'),
+    url(r'^upload/(?P<timetable_id>\d+)/$', 'timetable.university.views.upload_timetable', name='upload_timetable'),
+    url(r'^view/(?P<timetable_id>\d+)/$', 'timetable.university.views.view_timetable', name='view_timetable'),
     # url(r'^timetable/', include('timetable.foo.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:

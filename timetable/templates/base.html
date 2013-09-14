@@ -7,7 +7,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Starter Template for Bootstrap</title>
+    <title>{% block title %}Timetable{% endblock %}</title>
 
     <!-- Bootstrap core CSS -->
     <link href="{% static "css/bootstrap.css" %}" rel="stylesheet">
@@ -40,6 +40,7 @@
         </div><!--/.nav-collapse -->
       </div>
     </div>
+  {% block body %}
 
     <div class="container">
 
@@ -75,6 +76,6 @@
             {% endfor %}
         {% endfor %}
     </table>
-
+  {% endblock %}
   </body>
 </html>
