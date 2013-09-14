@@ -1,41 +1,32 @@
 # Create your views here.
 
+import csv
+import json
+
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.utils.datastructures import MultiValueDictKeyError
-from django.template.defaultfilters import register as rf
 
 from timetable.university.models import day_names, lesson_times, Timetable, TimetableItem
-
-import csv
-
-
-
-@rf.filter(name='lookup')
-def lookup(dictionary, index):
-    if index in dictionary:
-        return dictionary[index]
-    return None
-
 
 
 def edit_timetable(request, timetable_id):
     timetable = get_object_or_404(Timetable, pk=timetable_id)
-    items = timetable.timetableitem_set.all()
-    day_lesson_items = {}
-    for day_number in day_names:
-        day_lesson_items[day_number] = {}
-        for lesson_number in lesson_times:
-            day_lesson_items[day_number][lesson_number] = []
-    for item in items:
-        day_lesson_items[item.day_number][item.lesson_number].append(item)
+    items = timetable.timetableitem_set.values(
+            'day_number',
+            'lesson_number',
+            'room',
+            'discipline',
+            'group',
+            'lecturer',
+            'weeks').order_by('day_number', 'lesson_number', 'pk')
     return render_to_response(
             'starter_template.html',
             {
                 'day_names': day_names.items(),
                 'lesson_times': lesson_times.items(),
                 'number_of_lessons': len(lesson_times),
-                'day_lesson_items': day_lesson_items,
+                'items': json.dumps(list(items), ensure_ascii=False),
                 },
             context_instance=RequestContext(request)
             )

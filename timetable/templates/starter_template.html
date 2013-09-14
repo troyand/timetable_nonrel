@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load staticfiles %}
 {% block body %}
-    <form class="form-inline" style="display:none" id="clonable-lesson">
+    <form class="form-inline lesson" style="display:none" id="clonable-lesson">
         <input class="form-control room" style="width:100px" placeholder="Аудиторія">
         <input class="form-control discipline" style="width:320px" placeholder="Предмет" required>
         <input class="form-control group" style="width:80px" placeholder="Група" type="text">
@@ -20,22 +20,13 @@
                         {{ lesson_time }}
                     </td>
                     <td>
-                        {% with items=day_lesson_items|lookup:day_number|lookup:lesson_number %}
-                            {% for item in items %}
-    <form class="form-inline" id="clonable-lesson">
-        <input class="form-control room" style="width:100px" placeholder="Аудиторія" value="{{ item.room }}">
-        <input class="form-control discipline" style="width:320px" placeholder="Предмет" required value="{{ item.discipline }}">
-        <input class="form-control group" style="width:80px" placeholder="Група" type="text" value="{{ item.group|default_if_none:'' }}">
-        <input class="form-control lecturer" style="width:200px" placeholder="Викладач" value="{{ item.lecturer }}">
-        <input class="form-control weeks" style="width:160px" placeholder="Тижні" onkeypress="return validateWeeksInputKey(event);" value="{{ item.weeks }}">
-        <button type="button" class="btn btn-danger" onclick="deleteLesson(this);" tabindex="-1">Видалити</button>
-    </form>
-                            {% endfor %}
-                        {% endwith %}
+                        <div id="lessons-{{ day_number }}-{{ lesson_number }}">
+                        </div>
                         <div><button type="button" class="add-lesson btn btn-success" onclick="addLesson(this);">Додати пару</button></div>
                     </td>
                 </tr>
             {% endfor %}
         {% endfor %}
     </table>
+    {% include "load_json_timetable.html" %}
 {% endblock %}

@@ -1,0 +1,15 @@
+<script>
+$(document).ready(function() {
+    var items = {{ items|safe}};
+    $.each(items, function(i, item) {
+        var divId = "#lessons-" + item.day_number + "-" + item.lesson_number;
+        var formClone = $("#clonable-lesson").clone().show();
+        formClone.find(".room").val(item.room);
+        formClone.find(".discipline").val(item.discipline);
+        formClone.find(".group").val(item.group);
+        formClone.find(".lecturer").val(item.lecturer);
+        formClone.find(".weeks").val(item.weeks);
+        $(divId).append(formClone);
+    });
+});
+</script>
