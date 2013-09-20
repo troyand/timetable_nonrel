@@ -1,6 +1,7 @@
 <script>
 function serializeItems() {
     var result = [];
+    errorsFound = false;
     $.each($(".item"), function(i, formItem) {
         var item = {};
         var itemElement = $(formItem);    
@@ -8,8 +9,13 @@ function serializeItems() {
         var idParts = divId.split("-");
         item["day_number"] = parseInt(idParts[1]);
         item["lesson_number"] = parseInt(idParts[2]);
+        itemElement.removeClass("has-error");
+        if (itemElement.find(".weeks").val() == "") {
+            itemElement.addClass("has-error");
+            errorsFound = true;
+        }
         $.each(["room", "discipline", "group", "lecturer", "weeks"], function(j, field) {
-            item[field] = itemElement.find("." + field).val();
+            item[field] = itemElement.find("." + field).val() || null;
         });
         result.push(item);
     });
