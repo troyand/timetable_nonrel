@@ -1,0 +1,32 @@
+<div id="check-items-1" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="check-items-label" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Перевірка даних</h2>
+            </div>
+            <div class="modal-body">
+                <h4>Аудиторії</h4>
+                {% for label, room in labeled_rooms %}
+                    <span class="label label-{{ label }}">{{ room }}</span>
+                {% endfor %}
+                <h4>Викладачі</h4>
+                {% for label, lecturer in labeled_lecturers %}
+                    <span class="label label-{{ label }}">{{ lecturer }}</span>
+                {% endfor %}
+                <h4>Дисципліни</h4>
+                {% for label, discipline in labeled_disciplines %}
+                    <span class="label label-{{ label }}">{{ discipline }}</span>
+                {% endfor %}
+                <hr>
+                <span class="label label-success">Збіг із даними із бази</span>
+                <span class="label label-warning">Даних у базі немає</span>
+                <span class="label label-danger">Потенційна помилка набору</span>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Скасувати</button>
+                <button type="button" class="btn btn-primary" onclick="checkTimetable2(this)">Продовжити перевірку</button>
+
+            </div>
+        </div>
+    </div>
+</div>

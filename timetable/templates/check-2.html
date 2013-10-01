@@ -1,0 +1,33 @@
+<div id="check-items-2" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="check-items-label" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Перевірка даних</h2>
+            </div>
+            <div class="modal-body">
+                <table class="table table-condensed table-striped">
+                    <tr>
+                        <th>Група</th>
+                        <th>Викладачі</th>
+                        <th>Кількість пар</th>
+                    </tr>
+                    {% for discipline, group_map in discipline_group_map.items %}
+                        <tr><td colspan="3"><i>{{ discipline }}</i></td></tr>
+                        {% for group, pair in group_map.items %}
+                            <tr>
+                                <td>{% if group %}{{ group }}{% else %}Лекції{% endif %}</td>
+                                <td>{{ pair.0|join:", " }}</td>
+                                <td>{{ pair.1 }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% endfor %}
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Скасувати</button>
+                <button type="button" class="btn btn-primary" onclick="checkTimetable2(this)">Продовжити перевірку</button>
+
+            </div>
+        </div>
+    </div>
+</div>

@@ -16,8 +16,12 @@ function validateWeeksInputKey(evt) {
 }
 
 function addLesson(sender) {
-    //TODO add hidden inputs for day and time
-    $("#clonable-lesson").clone().show().insertBefore($(sender));
+    var clone = $("#clonable-item").clone().show();
+    clone.insertBefore($(sender));
+    clone.find(".room").autocomplete({
+        serviceUrl:"/autocomplete/rooms/",
+        minChars:1,
+    });
 }
 
 function deleteLesson(sender) {

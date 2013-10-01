@@ -1,8 +1,13 @@
 #-*- coding: utf-8 -*-
 
 import datetime
+import os
+import codecs
+
+from collections import namedtuple
 
 from django.db import models
+from django.conf import settings
 from django.utils.encoding import smart_str
 
 
@@ -194,3 +199,32 @@ class TimetableItem(models.Model):
                 self.lecturer,
                 self.weeks,
                 )
+
+Lesson = namedtuple('Lesson', 'day lesson_number room discipline group lecturer')
+
+def items_to_lessons(items, academic_term):
+    lessons = []
+    for item in items:
+        weeks = academic_term.expand_weeks(item.weeks)
+        for week in weeks:
+            day = academic_term[week][item.day_number-1]
+            lesson = Lesson(
+                day,
+                item.lesson_number,
+                item.room,
+                item.discipline,
+                item.group,
+                item.lecturer,
+                )
+            lessons.append(lesson)
+    return lessons
+
+def load_from_file(fixture_txt):
+    full_filename = os.path.join(settings.SITE_ROOT, 'university', 'fixtures', fixture_txt)
+    with codecs.open(full_filename, 'r', 'utf8') as f:
+        result = f.read().splitlines()
+    return result
+
+all_lecturers = load_from_file('lecturers.txt')
+all_disciplines = load_from_file('disciplines.txt')
+all_rooms = load_from_file('rooms.txt')

@@ -2,7 +2,7 @@
 {% load staticfiles %}
 {% block body %}
     <form class="form-inline" style="display:none" id="clonable-item">
-        <input class="form-control room" style="width:100px" placeholder="Аудиторія">
+        <input class="form-control room" style="width:110px" placeholder="Аудиторія">
         <input class="form-control discipline" style="width:320px" placeholder="Предмет" required>
         <input class="form-control group" style="width:80px" placeholder="Група" type="text">
         <input class="form-control lecturer" style="width:200px" placeholder="Викладач">
@@ -20,7 +20,7 @@
                         {{ lesson_time }}
                     </td>
                     <td>
-                        <div id="items-{{ day_number }}-{{ lesson_number }}">
+                        <div class="items" id="items-{{ day_number }}-{{ lesson_number }}">
                         </div>
                         <div><button type="button" class="add-lesson btn btn-success" onclick="addLesson(this);">Додати пару</button></div>
                     </td>
@@ -28,5 +28,8 @@
             {% endfor %}
         {% endfor %}
     </table>
+    <div id="check-timetable-container">
+        <button type="button" class="btn btn-primary" onclick="checkTimetable1(this)" id="check-timetable" data-loading-text="Обробка...">Перевірити та зберегти розклад</button>
+    </div>
     {% include "load_json_timetable.html" %}
 {% endblock %}

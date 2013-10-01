@@ -19,7 +19,51 @@ function serializeItems() {
         });
         result.push(item);
     });
-    console.log(JSON.stringify(result));
+    return JSON.stringify(result);
+}
+
+function checkTimetable1(sender) {
+    var serialized = serializeItems();
+    $.post("/check-1/{{ timetable.pk }}/", {
+        items: serialized,
+        csrfmiddlewaretoken: '{{ csrf_token }}'
+    }).done(function(data) {
+        $("body").append(data);
+        $("#check-items-1").modal({keyboard:true});
+        $("#check-items-1").on("hidden.bs.modal", function () {
+            $("#check-items-1").remove();
+        });
+    });
+}
+
+function checkTimetable2(sender) {
+    var serialized = serializeItems();
+    $.post("/check-2/{{ timetable.pk }}/", {
+        items: serialized,
+        csrfmiddlewaretoken: '{{ csrf_token }}'
+    }).done(function(data) {
+        $("#check-items-1").modal("hide");
+        $("body").append(data);
+        $("#check-items-2").modal({keyboard:true});
+        $("#check-items-2").on("hidden.bs.modal", function () {
+            $("#check-items-2").remove();
+        });
+    });
+}
+
+function attachAutocomplete(node) {
+    node.find(".room").autocomplete({
+        serviceUrl:"/autocomplete/rooms/",
+        minChars:1, 
+    });        
+    node.find(".discipline").autocomplete({
+        serviceUrl:"/autocomplete/disciplines/",
+        minChars:1, 
+    });        
+    node.find(".lecturer").autocomplete({
+        serviceUrl:"/autocomplete/lecturers/",
+        minChars:1, 
+    });        
 }
 
 $(document).ready(function() {
@@ -32,8 +76,36 @@ $(document).ready(function() {
         formClone.find(".group").val(item.group);
         formClone.find(".lecturer").val(item.lecturer);
         formClone.find(".weeks").val(item.weeks);
+        attachAutocomplete(formClone);
         $(divId).append(formClone);
     });
-    serializeItems();
 });
+
+function validateWeeksInputKey(evt) {
+    var charCode = (evt.which) ? evt.which : event.keyCode;
+    if ((charCode >= 48) && (charCode <= 57)) {
+        // is a digit
+        return true;
+    }
+    if (charCode == 44) {
+        // is a comma
+        return true;
+    }
+    if (charCode == 45) {
+        // is a dash
+        return true;
+    }
+    return false;
+}
+
+function addLesson(sender) {
+    var formClone = $("#clonable-item").clone().show().addClass("item").attr("id", "");
+    attachAutocomplete(formClone);
+    $(sender).parent().parent().find(".items").append(formClone);
+}
+
+function deleteLesson(sender) {
+    $(sender).parent().remove();
+}
+
 </script>

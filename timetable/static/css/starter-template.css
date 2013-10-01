@@ -7,3 +7,8 @@
 .lesson-time {
     width: 100px;
 }
+#check-timetable-container {
+    float: right;
+    padding-bottom: 10px;
+    padding-right: 50px;
+}
