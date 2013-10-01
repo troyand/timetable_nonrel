@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block body %}
+    <h1>{{ timetable }}</h1>
+    {% for discipline, groups in discipline_group_list %}
+        <div class="row" style="padding-bottom:8px">
+            <div class="col-md-4">
+                {{ discipline }}
+            </div>
+            <div class="btn-group col-md-4" data-toggle="buttons">
+                {% for group in groups %}
+                    {% if group %}
+                        <label class="btn btn-default">
+                            <input type="checkbox">{{ group }}
+                        </label>
+                    {% else %}
+                        <label class="btn btn-default active">
+                            <input type="checkbox" checked>Лекції
+                        </label>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+
+{% endblock %}

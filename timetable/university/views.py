@@ -3,6 +3,7 @@
 import csv
 import json
 
+from django.db import transaction
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
@@ -42,7 +43,7 @@ def check_timetable_1(request, timetable_id):
         for raw_item in raw_items:
             item = TimetableItem(timetable=timetable, **raw_item)
             items.append(item)
-        rooms = sorted(set([i.room for i in items]))
+        rooms = sorted(set([i.room for i in items if i.room]))
         labeled_rooms = []
         for room in rooms:
             if room in all_rooms:
@@ -59,7 +60,7 @@ def check_timetable_1(request, timetable_id):
                 labeled_disciplines.append(('danger', discipline))
             else:
                 labeled_disciplines.append(('warning', discipline))
-        lecturers = sorted(set([i.lecturer for i in items]))
+        lecturers = sorted(set([i.lecturer for i in items if i.lecturer]))
         labeled_lecturers = []
         potential_duplicate_lecturers = get_potential_duplicates(lecturers)
         for lecturer in lecturers:
@@ -92,18 +93,48 @@ def check_timetable_2(request, timetable_id):
         discipline_group_map = {}
         for lesson in lessons:
             lecturers, count = discipline_group_map.setdefault(lesson.discipline, {}).get(lesson.group, (set(), 0))
-            lecturers.add(lesson.lecturer)
+            if lesson.lecturer:
+                lecturers.add(lesson.lecturer)
+            else:
+                lecturers.add(u'')
             count += 1
             discipline_group_map[lesson.discipline][lesson.group] = (lecturers, count)
+        discipline_group_list = []
+        for discipline in sorted(discipline_group_map.keys()):
+            # temp local vars
+            l_groups_lecturers = []
+            l_counts = []
+            for group in sorted(discipline_group_map[discipline].keys()):
+                lecturers, count = discipline_group_map[discipline][group]
+                if lecturers:
+                    l_groups_lecturers.append((group, u', '.join(lecturers)))
+                l_counts.append(count)
+            discipline_group_list.append((discipline, l_groups_lecturers, l_counts))
         return render_to_response(
                 'check-2.html',
                 {
                     'timetable': timetable,
                     'discipline_group_map': discipline_group_map,
+                    'discipline_group_list': discipline_group_list,
                     },
                 context_instance=RequestContext(request)
                 )
 
+@transaction.commit_on_success
+def submit_timetable(request, timetable_id):
+    timetable = get_object_or_404(Timetable, pk=timetable_id)
+    old_items = list(timetable.timetableitem_set.all())
+    if request.method == 'POST':
+        raw_items = json.loads(request.POST['items'])
+        for raw_item in raw_items:
+            item = TimetableItem(timetable=timetable, **raw_item)
+            item.save()
+        for item in old_items:
+            item.delete()
+        return HttpResponse(json.dumps({'status': 'ok'}))
+
+
+@transaction.commit_on_success
 def upload_timetable(request, timetable_id):
     timetable = get_object_or_404(Timetable, pk=timetable_id)
     if request.method == 'POST':
@@ -118,6 +149,13 @@ def upload_timetable(request, timetable_id):
                 if group == u'0' or group == u'':
                     # legacy lecture group
                     group = None
+                lecturer = lecturer.strip()
+                if lecturer:
+                    candidates = [l for l in all_lecturers if l.startswith(lecturer)]
+                    if len(candidates) == 1:
+                        lecturer = candidates[0]
+                else:
+                    lecturer = None
                 TimetableItem.objects.create(
                         timetable=timetable,
                         day_number=day_names_inverse[day_name],
@@ -125,7 +163,7 @@ def upload_timetable(request, timetable_id):
                         room=room or None,
                         discipline=discipline,
                         group=group,
-                        lecturer=lecturer.strip() or None,
+                        lecturer=lecturer,
                         weeks=weeks,
                         )
             for item in old_items:
@@ -142,15 +180,33 @@ def upload_timetable(request, timetable_id):
 
 def view_timetable(request, timetable_id):
     timetable = get_object_or_404(Timetable, pk=timetable_id)
-    academic_term = timetable.academic_term
-    lessons = items_to_lessons(timetable.timetableitem_set.all(), academic_term)
-    for lesson in sorted(lessons):
-        print '|'.join([unicode(el) for el in lesson])
+    items = timetable.timetableitem_set.all()
+    discipline_group_map = {}
+    for item in items:
+        discipline_group_map.setdefault(item.discipline, set()).add(item.group)
+    discipline_group_list = []
+    for discipline, groups in sorted(discipline_group_map.items()):
+        discipline_group_list.append((discipline, sorted(groups)))
+    #academic_term = timetable.academic_term
+    #lessons = items_to_lessons(timetable.timetableitem_set.all(), academic_term)
+    #for lesson in sorted(lessons):
+    #    print '|'.join([unicode(el) for el in lesson])
         #pass
     return render_to_response(
-            'upload.html',
+            'view.html',
             {
                 'timetable': timetable,
+                'discipline_group_list': discipline_group_list,
+                },
+            context_instance=RequestContext(request)
+            )
+
+def home(request):
+    timetables = Timetable.objects.all()
+    return render_to_response(
+            'home.html',
+            {
+                'timetables': timetables,
                 },
             context_instance=RequestContext(request)
             )

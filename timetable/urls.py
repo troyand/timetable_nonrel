@@ -6,10 +6,11 @@ from django.conf.urls import patterns, include, url
 
 urlpatterns = patterns('',
     # Examples:
-    # url(r'^$', 'timetable.views.home', name='home'),
+    url(r'^$', 'timetable.university.views.home', name='home'),
     url(r'^edit/(?P<timetable_id>\d+)/$', 'timetable.university.views.edit_timetable', name='edit_timetable'),
     url(r'^check-1/(?P<timetable_id>\d+)/$', 'timetable.university.views.check_timetable_1', name='check_timetable_1'),
     url(r'^check-2/(?P<timetable_id>\d+)/$', 'timetable.university.views.check_timetable_2', name='check_timetable_2'),
+    url(r'^submit/(?P<timetable_id>\d+)/$', 'timetable.university.views.submit_timetable', name='submit_timetable'),
     url(r'^upload/(?P<timetable_id>\d+)/$', 'timetable.university.views.upload_timetable', name='upload_timetable'),
     url(r'^view/(?P<timetable_id>\d+)/$', 'timetable.university.views.view_timetable', name='view_timetable'),
     url(r'^autocomplete/rooms/$', 'timetable.university.views.autocomplete_rooms'),

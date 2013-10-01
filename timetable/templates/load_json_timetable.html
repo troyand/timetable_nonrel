@@ -45,9 +45,23 @@ function checkTimetable2(sender) {
         $("#check-items-1").modal("hide");
         $("body").append(data);
         $("#check-items-2").modal({keyboard:true});
+        $(".lecturer-tooltip").tooltip({});
         $("#check-items-2").on("hidden.bs.modal", function () {
             $("#check-items-2").remove();
         });
+    });
+}
+
+function submitTimetable(sender) {
+    var serialized = serializeItems();
+    $("#cancel-button").attr("disabled", "disabled");
+    $("#submit-timetable-button").attr("disabled", "disabled");
+    $.post("/submit/{{ timetable.pk }}/", {
+        items: serialized,
+        csrfmiddlewaretoken: '{{ csrf_token }}'
+    }).done(function(data) {
+        $("#check-items-2").modal("hide");
+        location.reload(true);
     });
 }
 
