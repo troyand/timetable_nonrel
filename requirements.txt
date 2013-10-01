@@ -1,0 +1,4 @@
+Django==1.5.2
+Unidecode==0.04.14
+jellyfish==0.2.0
+wsgiref==0.1.2
