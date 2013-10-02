@@ -10,16 +10,17 @@
                 {% for group in groups %}
                     {% if group %}
                         <label class="btn btn-default">
-                            <input type="checkbox">{{ group }}
+                            <input type="checkbox" class="group-input" data-toggle="button" data-timetable-id="{{ timetable.pk }}" data-discipline="{{ discipline }}" data-group="{{ group }}">{{ group }}
                         </label>
                     {% else %}
                         <label class="btn btn-default active">
-                            <input type="checkbox" checked>Лекції
+                            <input type="checkbox" class="group-input" data-toggle="button" data-timetable-id="{{ timetable.pk }}" data-discipline="{{ discipline }}" data-group="null" checked>Лекції
                         </label>
                     {% endif %}
                 {% endfor %}
             </div>
         </div>
     {% endfor %}
+    <button class="btn btn-primary" onclick="goRenderTimetable('{{ csrf_token }}')">Переглянути розклад</button>
 
 {% endblock %}

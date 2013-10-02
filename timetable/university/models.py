@@ -200,6 +200,12 @@ class TimetableItem(models.Model):
                 self.weeks,
                 )
 
+
+class RenderLink(models.Model):
+    link_hash = models.CharField(max_length=32)
+    groups_json = models.TextField()
+
+
 Lesson = namedtuple('Lesson', 'day lesson_number room discipline group lecturer')
 
 def items_to_lessons(items, academic_term):

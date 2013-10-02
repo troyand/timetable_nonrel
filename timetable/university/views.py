@@ -2,6 +2,7 @@
 
 import csv
 import json
+import hashlib
 
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseForbidden
@@ -9,7 +10,7 @@ from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.utils.datastructures import MultiValueDictKeyError
 
-from timetable.university.models import day_names, lesson_times, Timetable, TimetableItem, items_to_lessons, all_lecturers, all_disciplines, all_rooms
+from timetable.university.models import day_names, lesson_times, Timetable, TimetableItem, RenderLink, items_to_lessons, all_lecturers, all_disciplines, all_rooms
 from timetable.university.utils import get_potential_duplicates
 
 
@@ -197,6 +198,39 @@ def view_timetable(request, timetable_id):
             {
                 'timetable': timetable,
                 'discipline_group_list': discipline_group_list,
+                },
+            context_instance=RequestContext(request)
+            )
+
+def get_link(request):
+    if request.method == 'POST':
+        groups_json = request.POST['groups']
+        link_hash = hashlib.sha1(groups_json.encode('utf8')).hexdigest()
+        try:
+            RenderLink.objects.get(link_hash=link_hash)
+        except RenderLink.DoesNotExist:
+            RenderLink.objects.create(link_hash=link_hash, groups_json=groups_json)
+        return HttpResponse(link_hash)
+
+def render_timetable(request, link_hash):
+    render_link = get_object_or_404(RenderLink, link_hash=link_hash)
+    group_records = json.loads(render_link.groups_json)
+    timetable_map = {}
+    for timetable_id, discipline, group in group_records:
+        timetable_map.setdefault(timetable_id, []).append((discipline, group))
+    lessons = []
+    for timetable_id in sorted(timetable_map.keys()):
+        timetable = get_object_or_404(Timetable, pk=timetable_id)
+        all_items = timetable.timetableitem_set.all()
+        filtered_items = []
+        for discipline, group in timetable_map[timetable_id]:
+            filtered_items.extend([i for i in all_items if i.discipline == discipline and i.group == group])
+        lessons.extend(items_to_lessons(filtered_items, timetable.academic_term))
+    lessons.sort(key=lambda i: (i.day, i.lesson_number))
+    return render_to_response(
+            'render.html',
+            {
+                'lessons': lessons,
                 },
             context_instance=RequestContext(request)
             )
