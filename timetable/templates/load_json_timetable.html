@@ -10,7 +10,7 @@ function serializeItems() {
         item["day_number"] = parseInt(idParts[1]);
         item["lesson_number"] = parseInt(idParts[2]);
         itemElement.removeClass("has-error");
-        if (itemElement.find(".weeks").val() == "") {
+    if (itemElement.find(".weeks").val() == "" || itemElement.find(".discipline").val() == "") {
             itemElement.addClass("has-error");
             errorsFound = true;
         }
@@ -19,6 +19,9 @@ function serializeItems() {
         });
         result.push(item);
     });
+    if (errorsFound) {
+        throw "Validation error";
+    }
     return JSON.stringify(result);
 }
 
