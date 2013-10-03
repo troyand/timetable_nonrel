@@ -23,5 +23,7 @@ def get_disciplines(level, program, year, term):
         'year': year,
         'term': term,
         })
+    if not response.json():
+        return []
     result = [i for i in response.json().keys()]
     return result

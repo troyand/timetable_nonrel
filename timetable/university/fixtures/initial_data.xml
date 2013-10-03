@@ -91,7 +91,7 @@
  <object pk="10" model="university.major">
   <field to="university.faculty" name="faculty" rel="ManyToOneRel">4</field>
   <field type="CharField" name="code">6.030401</field>
-  <field type="CharField" name="name">Право</field>
+  <field type="CharField" name="name">Правознавство</field>
   <field type="CharField" name="kind">бакалавр</field>
  </object>
  <object pk="11" model="university.major">
