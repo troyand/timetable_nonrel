@@ -11,7 +11,7 @@ from django.template import RequestContext
 from django.utils.datastructures import MultiValueDictKeyError
 
 from timetable.university.models import day_names, lesson_times, Timetable, TimetableItem, RenderLink, items_to_lessons, all_lecturers, all_disciplines, all_rooms
-from timetable.university.utils import get_potential_duplicates
+from timetable.university.utils import get_potential_duplicates, get_disciplines
 
 
 def edit_timetable(request, timetable_id):
@@ -24,6 +24,14 @@ def edit_timetable(request, timetable_id):
             'group',
             'lecturer',
             'weeks').order_by('day_number', 'lesson_number', 'pk')
+    season = timetable.academic_term.season
+    season_number = timetable.academic_term.SEASONS.index((season, season)) + 1
+    usic_disciplines = get_disciplines(timetable.major.kind,
+            timetable.major.name,
+            timetable.year,
+            season_number,
+            )
+    disciplines = sorted(set([i['discipline'] for i in items] + usic_disciplines))
     return render_to_response(
             'starter_template.html',
             {
@@ -32,6 +40,7 @@ def edit_timetable(request, timetable_id):
                 'lesson_times': lesson_times.items(),
                 'number_of_lessons': len(lesson_times),
                 'items': json.dumps(list(items), ensure_ascii=False),
+                'disciplines': disciplines,
                 },
             context_instance=RequestContext(request)
             )

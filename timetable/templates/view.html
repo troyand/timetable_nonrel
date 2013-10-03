@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block body %}
-    <h1>{{ timetable }}</h1>
+    <h1>{{ timetable }} - {{ timetable.academic_term.season }} {{ timetable.academic_term.kind }}</h1>
     {% for discipline, groups in discipline_group_list %}
         <div class="row" style="padding-bottom:8px">
             <div class="col-md-4">

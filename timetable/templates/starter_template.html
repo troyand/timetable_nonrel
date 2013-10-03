@@ -3,7 +3,11 @@
 {% block body %}
     <form class="form-inline" style="display:none" id="clonable-item">
         <input class="form-control room" style="width:110px" placeholder="Аудиторія">
-        <input class="form-control discipline" style="width:320px" placeholder="Предмет" required>
+        <select class="form-control discipline" style="width:320px">
+            {% for discipline in disciplines %}
+                <option>{{ discipline }}</option>
+            {% endfor %}
+        </select>
         <input class="form-control group" style="width:80px" placeholder="Група" type="text">
         <input class="form-control lecturer" style="width:200px" placeholder="Викладач">
         <input class="form-control weeks" style="width:160px" placeholder="Тижні" onkeypress="return validateWeeksInputKey(event);">
