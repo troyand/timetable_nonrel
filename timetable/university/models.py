@@ -8,6 +8,7 @@ from collections import namedtuple
 
 from django.db import models
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.utils.encoding import smart_str
 
 
@@ -179,8 +180,15 @@ class Timetable(models.Model):
                 )
 
 
-class TimetableItem(models.Model):
+class TimetableVersion(models.Model):
     timetable = models.ForeignKey(Timetable)
+    author = models.ForeignKey(User)
+    date_created = models.DateTimeField(auto_now_add = True)
+    parent = models.ForeignKey('self', null=True)
+
+
+class TimetableItem(models.Model):
+    timetable_version = models.ForeignKey(TimetableVersion)
     day_number = models.IntegerField(choices=sorted(day_names.items()))
     lesson_number = models.IntegerField(choices=sorted(lesson_times.items()))
     room = models.CharField(max_length=32, null=True, blank=True)
@@ -206,7 +214,7 @@ class RenderLink(models.Model):
     groups_json = models.TextField()
 
 
-Lesson = namedtuple('Lesson', 'day lesson_number room discipline group lecturer')
+Lesson = namedtuple('Lesson', 'date lesson_number room discipline group lecturer')
 
 def items_to_lessons(items, academic_term):
     lessons = []

@@ -3,11 +3,11 @@
     <table class="table table-striped">
         {% for lesson in lessons %}
             <tr>
-                <td>{{ lesson.day }}</td>
+                <td>{{ lesson.date }}</td>
                 <td>{{ lesson.lesson_number }}</td>
                 <td>{{ lesson.room }}</td>
                 <td>{{ lesson.discipline }}</td>
-                <td>{% if lesson.group %}{{ lesson.group }}{% else %}Лекції{% endif %}</td>
+                <td>{% if lesson.group %}{{ lesson.group }}{% else %}Лекція{% endif %}</td>
                 <td>{{ lesson.lecturer }}</td>
             </tr>
         {% endfor %}

@@ -22,5 +22,11 @@
         </div>
     {% endfor %}
     <button class="btn btn-primary" onclick="goRenderTimetable('{{ csrf_token }}')">Переглянути розклад</button>
+    <button class="btn btn-primary" onclick="goIcalTimetable('{{ csrf_token }}')">Експортувати в iCal</button>
+    {% if not version.parent %}
+        <a href="/upload/{{ version.pk }}/" class="btn btn-default">Завантажити розклад</a>
+    {% endif %}
+    <a href="/edit/{{ version.pk }}/" class="btn btn-default">Редагувати розклад</a>
+    <div><a id="ical-link" style="display:none">Посилання на iCal</a></div>
 
 {% endblock %}

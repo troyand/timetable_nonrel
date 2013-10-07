@@ -41,5 +41,19 @@ function goRenderTimetable(csrfToken) {
     }).done(function(data) {
             window.location.href = '/render/' + data + '/';
     });
-    console.log(serialized);
+}
+
+function goIcalTimetable(csrfToken) {
+    var selected = $(".group-input:checked");
+    var serialized = [];
+    $.each(selected, function(i, item) {
+        var jqItem = $(item);
+        serialized.push([jqItem.data("timetable-id"), jqItem.data("discipline"), jqItem.data("group") ? jqItem.attr("data-group") : null]);
+    });
+    $.post("/get-link/", {
+        csrfmiddlewaretoken: csrfToken,
+        groups: JSON.stringify(serialized)
+    }).done(function(data) {
+        $("#ical-link").attr("href", "/ical/" + data + "/").show();
+    });
 }

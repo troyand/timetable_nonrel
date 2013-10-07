@@ -1,6 +1,8 @@
 # Create your views here.
 
+import base64
 import csv
+import icalendar
 import json
 import hashlib
 
@@ -10,13 +12,14 @@ from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.utils.datastructures import MultiValueDictKeyError
 
-from timetable.university.models import day_names, lesson_times, Timetable, TimetableItem, RenderLink, items_to_lessons, all_lecturers, all_disciplines, all_rooms
-from timetable.university.utils import get_potential_duplicates, get_disciplines
+from timetable.university.models import *
+from timetable.university.utils import get_potential_duplicates, get_disciplines, lessons_to_events, academic_terms_to_events
 
 
-def edit_timetable(request, timetable_id):
-    timetable = get_object_or_404(Timetable, pk=timetable_id)
-    items = timetable.timetableitem_set.values(
+def edit_timetable(request, version_id):
+    version = get_object_or_404(TimetableVersion, pk=version_id)
+    timetable = version.timetable
+    items = version.timetableitem_set.values(
             'day_number',
             'lesson_number',
             'room',
@@ -45,13 +48,19 @@ def edit_timetable(request, timetable_id):
             context_instance=RequestContext(request)
             )
 
-def check_timetable_1(request, timetable_id):
-    timetable = get_object_or_404(Timetable, pk=timetable_id)
+def check_timetable_1(request, version_id):
+    timetable_version = get_object_or_404(TimetableVersion, pk=version_id)
+    timetable = timetable_version.timetable
+    new_version = TimetableVersion(
+            timetable=timetable_version.timetable,
+            author=User.objects.get(username='webmaster'),
+            parent=timetable_version,
+            )
     if request.method == 'POST':
         raw_items = json.loads(request.POST['items'])
         items = []
         for raw_item in raw_items:
-            item = TimetableItem(timetable=timetable, **raw_item)
+            item = TimetableItem(timetable_version=new_version, **raw_item)
             items.append(item)
         rooms = sorted(set([i.room for i in items if i.room]))
         labeled_rooms = []
@@ -145,14 +154,21 @@ def submit_timetable(request, timetable_id):
 
 
 @transaction.commit_on_success
-def upload_timetable(request, timetable_id):
-    timetable = get_object_or_404(Timetable, pk=timetable_id)
+def upload_timetable(request, version_id):
+    timetable_version = get_object_or_404(TimetableVersion, pk=version_id)
+    timetable = timetable_version.timetable
+    if timetable_version.parent:
+        raise HttpResponseForbidden('Forbidden')
     if request.method == 'POST':
         try:
+            new_version = TimetableVersion.objects.create(
+                    timetable=timetable_version.timetable,
+                    author=User.objects.get(username='webmaster'),
+                    parent=timetable_version,
+                    )
             day_names_inverse = {day_name.upper():day_number for day_number, day_name in day_names.items()}
             lesson_times_inverse = {lesson_time:lesson_number for lesson_number, lesson_time in lesson_times.items()}
             csv_contents = request.FILES['csv_file']
-            old_items = list(timetable.timetableitem_set.all())
             for line in csv.reader(csv_contents):
                 row = [e.decode('utf-8') for e in line]
                 day_name, lesson_time, room, discipline, group, lecturer, weeks = row
@@ -167,7 +183,7 @@ def upload_timetable(request, timetable_id):
                 else:
                     lecturer = None
                 TimetableItem.objects.create(
-                        timetable=timetable,
+                        timetable_version=new_version,
                         day_number=day_names_inverse[day_name],
                         lesson_number=lesson_times_inverse[lesson_time],
                         room=room or None,
@@ -176,8 +192,6 @@ def upload_timetable(request, timetable_id):
                         lecturer=lecturer,
                         weeks=weeks,
                         )
-            for item in old_items:
-                item.delete()
         except MultiValueDictKeyError:
             pass
     return render_to_response(
@@ -188,9 +202,10 @@ def upload_timetable(request, timetable_id):
             context_instance=RequestContext(request)
             )
 
-def view_timetable(request, timetable_id):
-    timetable = get_object_or_404(Timetable, pk=timetable_id)
-    items = timetable.timetableitem_set.all()
+def view_timetable(request, version_id):
+    timetable_version = get_object_or_404(TimetableVersion, pk=version_id)
+    timetable = timetable_version.timetable
+    items = timetable_version.timetableitem_set.all()
     discipline_group_map = {}
     for item in items:
         discipline_group_map.setdefault(item.discipline, set()).add(item.group)
@@ -206,6 +221,7 @@ def view_timetable(request, timetable_id):
             'view.html',
             {
                 'timetable': timetable,
+                'version': timetable_version,
                 'discipline_group_list': discipline_group_list,
                 },
             context_instance=RequestContext(request)
@@ -214,14 +230,15 @@ def view_timetable(request, timetable_id):
 def get_link(request):
     if request.method == 'POST':
         groups_json = request.POST['groups']
-        link_hash = hashlib.sha1(groups_json.encode('utf8')).hexdigest()
+        link_hash = base64.urlsafe_b64encode(
+                hashlib.sha1(groups_json.encode('utf8')).digest()).rstrip('=')
         try:
             RenderLink.objects.get(link_hash=link_hash)
         except RenderLink.DoesNotExist:
             RenderLink.objects.create(link_hash=link_hash, groups_json=groups_json)
         return HttpResponse(link_hash)
 
-def render_timetable(request, link_hash):
+def get_lessons_by_link_hash(link_hash):
     render_link = get_object_or_404(RenderLink, link_hash=link_hash)
     group_records = json.loads(render_link.groups_json)
     timetable_map = {}
@@ -230,12 +247,29 @@ def render_timetable(request, link_hash):
     lessons = []
     for timetable_id in sorted(timetable_map.keys()):
         timetable = get_object_or_404(Timetable, pk=timetable_id)
-        all_items = timetable.timetableitem_set.all()
+        # TODO - add more logic here
+        # but for now, just take the latest tt version
+        version = timetable.timetableversion_set.all().order_by('-date_created')[0]
+        all_items = version.timetableitem_set.all()
         filtered_items = []
         for discipline, group in timetable_map[timetable_id]:
             filtered_items.extend([i for i in all_items if i.discipline == discipline and i.group == group])
         lessons.extend(items_to_lessons(filtered_items, timetable.academic_term))
-    lessons.sort(key=lambda i: (i.day, i.lesson_number))
+    return lessons
+
+def get_academic_terms_by_link_hash(link_hash):
+    render_link = get_object_or_404(RenderLink, link_hash=link_hash)
+    group_records = json.loads(render_link.groups_json)
+    timetable_ids = set([i[0] for i in group_records])
+    academic_terms = []
+    for timetable_id in timetable_ids:
+        timetable = get_object_or_404(Timetable, pk=timetable_id)
+        academic_terms.append(timetable.academic_term)
+    return academic_terms
+
+def render_timetable(request, link_hash):
+    lessons = get_lessons_by_link_hash(link_hash)
+    lessons.sort(key=lambda i: (i.date, i.lesson_number))
     return render_to_response(
             'render.html',
             {
@@ -243,6 +277,23 @@ def render_timetable(request, link_hash):
                 },
             context_instance=RequestContext(request)
             )
+
+def ical_timetable(request, link_hash):
+    lessons = get_lessons_by_link_hash(link_hash)
+    academic_terms = get_academic_terms_by_link_hash(link_hash)
+    calendar = icalendar.Calendar()
+    calendar.add('prodid', '-//USIC timetable//')
+    calendar.add('version', '2.0')
+    for event in lessons_to_events(lessons, lesson_times):
+        calendar.add_component(event)
+    for event in academic_terms_to_events(academic_terms):
+        calendar.add_component(event)
+    response = HttpResponse(
+            calendar.to_ical(),
+            mimetype='text/calendar; charset=UTF-8',
+            )
+    response['Content-Disposition'] = 'attachment; filename=timetable.ics'
+    return response
 
 def home(request):
     timetables = Timetable.objects.all()

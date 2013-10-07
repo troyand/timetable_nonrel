@@ -1,7 +1,10 @@
 {% extends "base.html" %}
 {% block body %}
     {% for timetable in timetables %}
-        <h4>{{ timetable }} <a href="/edit/{{ timetable.pk }}">Редагувати</a> <a href="/upload/{{ timetable.pk }}">Завантажити</a> <a href="/view/{{ timetable.pk }}">Переглянути</a> 
+        <h4>{{ timetable }}
+            {% for version in timetable.timetableversion_set.all %}
+                <a href="/view/{{ version.pk }}">{{ version.author }} {{ version.date_created }}</a>
+            {% endfor %}
 
     {% endfor %}
 {% endblock %}
