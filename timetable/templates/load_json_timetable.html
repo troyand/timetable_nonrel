@@ -27,7 +27,7 @@ function serializeItems() {
 
 function checkTimetable1(sender) {
     var serialized = serializeItems();
-    $.post("/check-1/{{ timetable.pk }}/", {
+    $.post("/check-1/{{ version.pk }}/", {
         items: serialized,
         csrfmiddlewaretoken: '{{ csrf_token }}'
     }).done(function(data) {
@@ -41,7 +41,7 @@ function checkTimetable1(sender) {
 
 function checkTimetable2(sender) {
     var serialized = serializeItems();
-    $.post("/check-2/{{ timetable.pk }}/", {
+    $.post("/check-2/{{ version.pk }}/", {
         items: serialized,
         csrfmiddlewaretoken: '{{ csrf_token }}'
     }).done(function(data) {
@@ -59,7 +59,7 @@ function submitTimetable(sender) {
     var serialized = serializeItems();
     $("#cancel-button").attr("disabled", "disabled");
     $("#submit-timetable-button").attr("disabled", "disabled");
-    $.post("/submit/{{ timetable.pk }}/", {
+    $.post("/submit/{{ version.pk }}/", {
         items: serialized,
         csrfmiddlewaretoken: '{{ csrf_token }}'
     }).done(function(data) {

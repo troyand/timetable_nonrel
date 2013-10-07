@@ -39,6 +39,7 @@ def edit_timetable(request, version_id):
             'starter_template.html',
             {
                 'timetable': timetable,
+                'version': version,
                 'day_names': day_names.items()[:6],
                 'lesson_times': lesson_times.items(),
                 'number_of_lessons': len(lesson_times),
@@ -93,6 +94,7 @@ def check_timetable_1(request, version_id):
                 'check.html',
                 {
                     'timetable': timetable,
+                    'version': timetable_version,
                     'labeled_rooms': labeled_rooms,
                     'labeled_disciplines': labeled_disciplines,
                     'labeled_lecturers': labeled_lecturers,
@@ -100,13 +102,19 @@ def check_timetable_1(request, version_id):
                 context_instance=RequestContext(request)
                 )
 
-def check_timetable_2(request, timetable_id):
-    timetable = get_object_or_404(Timetable, pk=timetable_id)
+def check_timetable_2(request, version_id):
+    timetable_version = get_object_or_404(TimetableVersion, pk=version_id)
+    timetable = timetable_version.timetable
+    new_version = TimetableVersion(
+            timetable=timetable_version.timetable,
+            author=User.objects.get(username='webmaster'),
+            parent=timetable_version,
+            )
     if request.method == 'POST':
         raw_items = json.loads(request.POST['items'])
         items = []
         for raw_item in raw_items:
-            item = TimetableItem(timetable=timetable, **raw_item)
+            item = TimetableItem(timetable_version=new_version, **raw_item)
             items.append(item)
         lessons = items_to_lessons(items, timetable.academic_term)
         discipline_group_map = {}
@@ -133,6 +141,7 @@ def check_timetable_2(request, timetable_id):
                 'check-2.html',
                 {
                     'timetable': timetable,
+                    'version': timetable_version,
                     'discipline_group_map': discipline_group_map,
                     'discipline_group_list': discipline_group_list,
                     },
@@ -140,16 +149,19 @@ def check_timetable_2(request, timetable_id):
                 )
 
 @transaction.commit_on_success
-def submit_timetable(request, timetable_id):
-    timetable = get_object_or_404(Timetable, pk=timetable_id)
-    old_items = list(timetable.timetableitem_set.all())
+def submit_timetable(request, version_id):
+    timetable_version = get_object_or_404(TimetableVersion, pk=version_id)
+    new_version = TimetableVersion(
+            timetable=timetable_version.timetable,
+            author=User.objects.get(username='webmaster'),
+            parent=timetable_version,
+            )
+    new_version.save()
     if request.method == 'POST':
         raw_items = json.loads(request.POST['items'])
         for raw_item in raw_items:
-            item = TimetableItem(timetable=timetable, **raw_item)
+            item = TimetableItem(timetable_version=new_version, **raw_item)
             item.save()
-        for item in old_items:
-            item.delete()
         return HttpResponse(json.dumps({'status': 'ok'}))
 
 
