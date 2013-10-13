@@ -2,6 +2,7 @@
 
 import base64
 import csv
+import difflib
 import icalendar
 import json
 import hashlib
@@ -13,7 +14,7 @@ from django.template import RequestContext
 from django.utils.datastructures import MultiValueDictKeyError
 
 from timetable.university.models import *
-from timetable.university.utils import get_potential_duplicates, get_disciplines, lessons_to_events, academic_terms_to_events
+from timetable.university.utils import get_potential_duplicates, get_disciplines, lessons_to_events, academic_terms_to_events, table_diff_lines
 
 
 def edit_timetable(request, version_id):
@@ -162,7 +163,10 @@ def submit_timetable(request, version_id):
         for raw_item in raw_items:
             item = TimetableItem(timetable_version=new_version, **raw_item)
             item.save()
-        return HttpResponse(json.dumps({'status': 'ok'}))
+        return HttpResponse(json.dumps({
+            'status': 'ok',
+            'redirect_url': '/compare/%d/%d/' % (timetable_version.pk, new_version.pk),
+            }))
 
 
 @transaction.commit_on_success
@@ -238,6 +242,23 @@ def view_timetable(request, version_id):
                 },
             context_instance=RequestContext(request)
             )
+
+def compare(request, version_left, version_right):
+    tt_version_left = get_object_or_404(TimetableVersion, pk=version_left)
+    tt_version_right = get_object_or_404(TimetableVersion, pk=version_right)
+    left_text, right_text = table_diff_lines(
+            tt_version_left.serialize_to_table_rows(),
+            tt_version_right.serialize_to_table_rows()
+            )
+    diff = difflib.HtmlDiff().make_file(
+            left_text,
+            right_text,
+            tt_version_left.date_created,
+            tt_version_right.date_created,
+            context=True,
+            numlines=0,
+            )
+    return HttpResponse(diff)
 
 def get_link(request):
     if request.method == 'POST':

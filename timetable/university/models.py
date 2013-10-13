@@ -186,6 +186,21 @@ class TimetableVersion(models.Model):
     date_created = models.DateTimeField(auto_now_add = True)
     parent = models.ForeignKey('self', null=True)
 
+    def serialize_to_table_rows(self):
+        result = []
+        for item in self.timetableitem_set.all().order_by('day_number', 'lesson_number', 'pk'):
+            row = [
+                    day_names[item.day_number],
+                    lesson_times[item.lesson_number].split(u'-')[0],
+                    item.room or '',
+                    item.discipline,
+                    item.group or u'Л',
+                    item.lecturer or '',
+                    item.weeks,
+                    ]
+            result.append(row)
+        return result
+
 
 class TimetableItem(models.Model):
     timetable_version = models.ForeignKey(TimetableVersion)

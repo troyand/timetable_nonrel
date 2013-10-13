@@ -64,7 +64,8 @@ function submitTimetable(sender) {
         csrfmiddlewaretoken: '{{ csrf_token }}'
     }).done(function(data) {
         $("#check-items-2").modal("hide");
-        location.reload(true);
+        var response = $.parseJSON(data);
+        window.location.href = response['redirect_url'];
     });
 }
 
