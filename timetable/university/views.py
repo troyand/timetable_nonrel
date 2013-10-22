@@ -7,6 +7,7 @@ import icalendar
 import json
 import hashlib
 
+from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import render_to_response, get_object_or_404
@@ -17,6 +18,7 @@ from timetable.university.models import *
 from timetable.university.utils import get_potential_duplicates, get_disciplines, lessons_to_events, academic_terms_to_events, table_diff_lines
 
 
+@login_required
 def edit_timetable(request, version_id):
     version = get_object_or_404(TimetableVersion, pk=version_id)
     timetable = version.timetable

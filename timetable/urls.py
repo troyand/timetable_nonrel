@@ -7,6 +7,7 @@ from django.conf.urls import patterns, include, url
 urlpatterns = patterns('',
     # Examples:
     url(r'^$', 'timetable.university.views.home', name='home'),
+    url(r'^accounts/login/$', 'django_usic_sso.views.login', name='login'),
     url(r'^edit/(?P<version_id>\d+)/$', 'timetable.university.views.edit_timetable', name='edit_timetable'),
     url(r'^check-1/(?P<version_id>\d+)/$', 'timetable.university.views.check_timetable_1', name='check_timetable_1'),
     url(r'^check-2/(?P<version_id>\d+)/$', 'timetable.university.views.check_timetable_2', name='check_timetable_2'),
