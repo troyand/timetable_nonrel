@@ -4,3 +4,4 @@ jellyfish==0.2.0
 icalendar
 requests
 wsgiref==0.1.2
+-e git+https://github.com/troyand/django-usic-sso.git#egg=django_usic_sso
