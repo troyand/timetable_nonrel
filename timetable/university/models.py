@@ -182,9 +182,11 @@ class Timetable(models.Model):
 
 class TimetableVersion(models.Model):
     timetable = models.ForeignKey(Timetable)
-    author = models.ForeignKey(User)
+    author = models.ForeignKey(User, related_name='authored')
     date_created = models.DateTimeField(auto_now_add = True)
     parent = models.ForeignKey('self', null=True)
+    approver = models.ForeignKey(User, blank=True, null=True, related_name='approved')
+    approve_date = models.DateTimeField(blank=True, null=True)
 
     def serialize_to_table_rows(self):
         result = []
@@ -227,6 +229,13 @@ class TimetableItem(models.Model):
 class RenderLink(models.Model):
     link_hash = models.CharField(max_length=32)
     groups_json = models.TextField()
+
+
+class Enrollment(models.Model):
+    user = models.ForeignKey(User)
+    timetable = models.ForeignKey(Timetable)
+    discipline = models.CharField(max_length=255)
+    group = models.CharField(max_length=32, null=True, blank=True)
 
 
 Lesson = namedtuple('Lesson', 'date lesson_number room discipline group lecturer')
