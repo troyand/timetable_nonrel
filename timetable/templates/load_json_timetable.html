@@ -4,7 +4,7 @@ function serializeItems() {
     errorsFound = false;
     $.each($(".item"), function(i, formItem) {
         var item = {};
-        var itemElement = $(formItem);    
+        var itemElement = $(formItem);
         var divId = itemElement.parent().attr("id");
         var idParts = divId.split("-");
         item["day_number"] = parseInt(idParts[1]);
@@ -20,6 +20,9 @@ function serializeItems() {
         result.push(item);
     });
     if (errorsFound) {
+        $("html, body").animate({
+            scrollTop: $($(".has-error")[0]).offset().top
+        }, 500);
         throw "Validation error";
     }
     return JSON.stringify(result);
