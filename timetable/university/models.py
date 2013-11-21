@@ -203,6 +203,62 @@ class TimetableVersion(models.Model):
             result.append(row)
         return result
 
+    def discipline_hours_table_rows(self):
+        lessons = items_to_lessons(self.timetableitem_set.all(), self.timetable.academic_term)
+        discipline_group_map = {}
+        for lesson in lessons:
+            lecturers, count = discipline_group_map.setdefault(lesson.discipline, {}).get(lesson.group, (set(), 0))
+            if lesson.lecturer:
+                lecturers.add(lesson.lecturer)
+            else:
+                lecturers.add(u'')
+            count += 1
+            discipline_group_map[lesson.discipline][lesson.group] = (lecturers, count)
+        result = []
+        for discipline in sorted(discipline_group_map.keys()):
+            for group in sorted(discipline_group_map[discipline].keys()):
+                lecturers, count = discipline_group_map[discipline][group]
+                if lecturers:
+                    lecturers = u', '.join(sorted(lecturers))
+                else:
+                    lecturers = u''
+                result.append((discipline, group or u'Л', lecturers, unicode(count)))
+        return result
+
+    def lecturer_hours_table_rows(self):
+        lessons = items_to_lessons(self.timetableitem_set.all(), self.timetable.academic_term)
+        lecturer_hours_map = {}
+        for lesson in lessons:
+            lecturer = lesson.lecturer or u'Ø'
+            lecturer_hours_map[lecturer] = lecturer_hours_map.get(lecturer, 0) + 1
+        result = []
+        for lecturer in sorted(lecturer_hours_map.keys()):
+            result.append((lecturer, unicode(lecturer_hours_map[lecturer])))
+        return result
+
+    def room_occupation_table_rows(self):
+        lessons = items_to_lessons(self.timetableitem_set.all(), self.timetable.academic_term)
+        room_occupation_map = {}
+        for lesson in lessons:
+            room = lesson.room or u'Ø'
+            key = (
+                    room,
+                    lesson.date.isoweekday(),
+                    lesson.lesson_number,
+                    )
+            room_occupation_map.setdefault(key, set())
+            room_occupation_map[key].add(self.timetable.academic_term.get_week(lesson.date).week_number)
+        result = []
+        for key in sorted(room_occupation_map.keys()):
+            room, day_number, lesson_number = key
+            result.append((
+                    room,
+                    day_names[day_number],
+                    lesson_times[lesson_number].split(u'-')[0],
+                    u','.join([unicode(i) for i in sorted(room_occupation_map[key])])
+                ))
+        return result
+
 
 class TimetableItem(models.Model):
     timetable_version = models.ForeignKey(TimetableVersion)

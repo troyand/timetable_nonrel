@@ -18,7 +18,7 @@ from timetable.university.models import *
 from timetable.university.utils import get_potential_duplicates, get_disciplines, lessons_to_events, academic_terms_to_events, table_diff_lines
 
 
-@login_required
+#@login_required
 def edit_timetable(request, version_id):
     version = get_object_or_404(TimetableVersion, pk=version_id)
     timetable = version.timetable
@@ -246,21 +246,45 @@ def view_timetable(request, version_id):
             )
 
 def compare(request, version_left, version_right):
+    full_diff = 0
     tt_version_left = get_object_or_404(TimetableVersion, pk=version_left)
     tt_version_right = get_object_or_404(TimetableVersion, pk=version_right)
-    left_text, right_text = table_diff_lines(
-            tt_version_left.serialize_to_table_rows(),
-            tt_version_right.serialize_to_table_rows()
+    diffs = []
+    if full_diff:
+        diff_kwargs = {
+                'context': False,
+                }
+    else:
+        diff_kwargs = {
+                'context': True,
+                'numlines': 0,
+                }
+    diff_input_pairs = [
+            (tt_version_left.serialize_to_table_rows(), tt_version_right.serialize_to_table_rows()),
+            (tt_version_left.discipline_hours_table_rows(), tt_version_right.discipline_hours_table_rows()),
+            (tt_version_left.lecturer_hours_table_rows(), tt_version_right.lecturer_hours_table_rows()),
+            (tt_version_left.room_occupation_table_rows(), tt_version_right.room_occupation_table_rows()),
+            ]
+    for left, right in diff_input_pairs:
+        left_text, right_text = table_diff_lines(
+                left, right, full_diff
+                )
+        diff = difflib.HtmlDiff().make_table(
+                left_text,
+                right_text,
+                tt_version_left.date_created,
+                tt_version_right.date_created,
+                **diff_kwargs
+                )
+        diffs.append(diff)
+    return render_to_response(
+            'diff.html',
+            {
+                'diffs': diffs,
+                },
+            context_instance=RequestContext(request)
             )
-    diff = difflib.HtmlDiff().make_file(
-            left_text,
-            right_text,
-            tt_version_left.date_created,
-            tt_version_right.date_created,
-            context=True,
-            numlines=0,
-            )
-    return HttpResponse(diff)
+    return HttpResponse(diff.replace(u'Courier', u'monospace'))
 
 def get_link(request):
     if request.method == 'POST':

@@ -86,9 +86,12 @@ def academic_terms_to_events(academic_terms):
             events.append(event)
     return events
 
-def table_diff_lines(left_rows, right_rows):
-    diff_rows = set(map(tuple, left_rows)) ^ set(map(tuple, right_rows))
-    widths = [max([len(row[i]) for row in diff_rows]) for i in range(len(left_rows[0]))]
+def table_diff_lines(left_rows, right_rows, full_diff):
+    if full_diff:
+        rows = set(map(tuple, left_rows)) | set(map(tuple, right_rows))
+    else:
+        rows = set(map(tuple, left_rows)) ^ set(map(tuple, right_rows))
+    widths = [max([len(row[i]) for row in rows]) for i in range(len(left_rows[0]))]
     left_justified = [[cell.ljust(width) for cell, width in zip(row, widths)] for row in left_rows]
     right_justified = [[cell.ljust(width) for cell, width in zip(row, widths)] for row in right_rows]
     return [u'│'.join(row) for row in left_justified], [u'│'.join(row) for row in right_justified]
