@@ -188,16 +188,24 @@ class TimetableVersion(models.Model):
     approver = models.ForeignKey(User, blank=True, null=True, related_name='approved')
     approve_date = models.DateTimeField(blank=True, null=True)
 
+    def parents(self):
+        result = []
+        version = self
+        while version.parent:
+            result.append(version.parent)
+            version = version.parent
+        return result
+
     def serialize_to_table_rows(self):
         result = []
         for item in self.timetableitem_set.all().order_by('day_number', 'lesson_number', 'pk'):
             row = [
                     day_names[item.day_number],
                     lesson_times[item.lesson_number].split(u'-')[0],
-                    item.room or '',
+                    item.room or u'Ø',
                     item.discipline,
                     item.group or u'Л',
-                    item.lecturer or '',
+                    item.lecturer or u'Ø',
                     item.weeks,
                     ]
             result.append(row)
@@ -221,7 +229,7 @@ class TimetableVersion(models.Model):
                 if lecturers:
                     lecturers = u', '.join(sorted(lecturers))
                 else:
-                    lecturers = u''
+                    lecturers = u'Ø'
                 result.append((discipline, group or u'Л', lecturers, unicode(count)))
         return result
 
