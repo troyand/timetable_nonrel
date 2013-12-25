@@ -13,14 +13,14 @@ from django.utils.encoding import smart_str
 
 
 day_names = {
-        1: u'Пн',
-        2: u'Вт',
-        3: u'Ср',
-        4: u'Чт',
-        5: u'Пт',
-        6: u'Сб',
-        7: u'Нд',
-        }
+    1: u'Пн',
+    2: u'Вт',
+    3: u'Ср',
+    4: u'Чт',
+    5: u'Пт',
+    6: u'Сб',
+    7: u'Нд',
+}
 
 
 lesson_times = {
@@ -90,11 +90,12 @@ class AcademicTerm(models.Model):
     )
 
     class Week:
+
         def __init__(self, academic_term, week_number):
             if week_number < 0 or week_number > academic_term.number_of_weeks:
                 raise ValueError(u'Invalid week number %d for %s' % (
                     week_number, academic_term)
-                    )
+                )
             self.academic_term = academic_term
             self.week_number = week_number
 
@@ -117,9 +118,9 @@ class AcademicTerm(models.Model):
         for part in weeks.split(','):
             if '-' in part:
                 result += range(
-                        int(part.split('-')[0]),
-                        int(part.split('-')[1]) + 1
-                        )
+                    int(part.split('-')[0]),
+                    int(part.split('-')[1]) + 1
+                )
             else:
                 result += [int(part)]
         if self.tcp_week in result:
@@ -174,18 +175,19 @@ class Timetable(models.Model):
 
     def __unicode__(self):
         return u'%s %s %d р.н.' % (
-                self.major.name,
-                self.major.kind,
-                self.year,
-                )
+            self.major.name,
+            self.major.kind,
+            self.year,
+        )
 
 
 class TimetableVersion(models.Model):
     timetable = models.ForeignKey(Timetable)
     author = models.ForeignKey(User, related_name='authored')
-    date_created = models.DateTimeField(auto_now_add = True)
+    date_created = models.DateTimeField(auto_now_add=True)
     parent = models.ForeignKey('self', null=True)
-    approver = models.ForeignKey(User, blank=True, null=True, related_name='approved')
+    approver = models.ForeignKey(
+        User, blank=True, null=True, related_name='approved')
     approve_date = models.DateTimeField(blank=True, null=True)
 
     def parents(self):
@@ -200,28 +202,31 @@ class TimetableVersion(models.Model):
         result = []
         for item in self.timetableitem_set.all().order_by('day_number', 'lesson_number', 'pk'):
             row = [
-                    day_names[item.day_number],
-                    lesson_times[item.lesson_number].split(u'-')[0],
-                    item.room or u'Ø',
-                    item.discipline,
-                    item.group or u'Л',
-                    item.lecturer or u'Ø',
-                    item.weeks,
-                    ]
+                day_names[item.day_number],
+                lesson_times[item.lesson_number].split(u'-')[0],
+                item.room or u'Ø',
+                item.discipline,
+                item.group or u'Л',
+                item.lecturer or u'Ø',
+                item.weeks,
+            ]
             result.append(row)
         return result
 
     def discipline_hours_table_rows(self):
-        lessons = items_to_lessons(self.timetableitem_set.all(), self.timetable.academic_term)
+        lessons = items_to_lessons(
+            self.timetableitem_set.all(), self.timetable.academic_term)
         discipline_group_map = {}
         for lesson in lessons:
-            lecturers, count = discipline_group_map.setdefault(lesson.discipline, {}).get(lesson.group, (set(), 0))
+            lecturers, count = discipline_group_map.setdefault(
+                lesson.discipline, {}).get(lesson.group, (set(), 0))
             if lesson.lecturer:
                 lecturers.add(lesson.lecturer)
             else:
                 lecturers.add(u'')
             count += 1
-            discipline_group_map[lesson.discipline][lesson.group] = (lecturers, count)
+            discipline_group_map[lesson.discipline][
+                lesson.group] = (lecturers, count)
         result = []
         for discipline in sorted(discipline_group_map.keys()):
             for group in sorted(discipline_group_map[discipline].keys()):
@@ -230,41 +235,47 @@ class TimetableVersion(models.Model):
                     lecturers = u', '.join(sorted(lecturers))
                 else:
                     lecturers = u'Ø'
-                result.append((discipline, group or u'Л', lecturers, unicode(count)))
+                result.append(
+                    (discipline, group or u'Л', lecturers, unicode(count)))
         return result
 
     def lecturer_hours_table_rows(self):
-        lessons = items_to_lessons(self.timetableitem_set.all(), self.timetable.academic_term)
+        lessons = items_to_lessons(
+            self.timetableitem_set.all(), self.timetable.academic_term)
         lecturer_hours_map = {}
         for lesson in lessons:
             lecturer = lesson.lecturer or u'Ø'
-            lecturer_hours_map[lecturer] = lecturer_hours_map.get(lecturer, 0) + 1
+            lecturer_hours_map[lecturer] = lecturer_hours_map.get(
+                lecturer, 0) + 1
         result = []
         for lecturer in sorted(lecturer_hours_map.keys()):
             result.append((lecturer, unicode(lecturer_hours_map[lecturer])))
         return result
 
     def room_occupation_table_rows(self):
-        lessons = items_to_lessons(self.timetableitem_set.all(), self.timetable.academic_term)
+        lessons = items_to_lessons(
+            self.timetableitem_set.all(), self.timetable.academic_term)
         room_occupation_map = {}
         for lesson in lessons:
             room = lesson.room or u'Ø'
             key = (
-                    room,
-                    lesson.date.isoweekday(),
-                    lesson.lesson_number,
-                    )
+                room,
+                lesson.date.isoweekday(),
+                lesson.lesson_number,
+            )
             room_occupation_map.setdefault(key, set())
-            room_occupation_map[key].add(self.timetable.academic_term.get_week(lesson.date).week_number)
+            room_occupation_map[key].add(
+                self.timetable.academic_term.get_week(lesson.date).week_number)
         result = []
         for key in sorted(room_occupation_map.keys()):
             room, day_number, lesson_number = key
             result.append((
-                    room,
-                    day_names[day_number],
-                    lesson_times[lesson_number].split(u'-')[0],
-                    u','.join([unicode(i) for i in sorted(room_occupation_map[key])])
-                ))
+                room,
+                day_names[day_number],
+                lesson_times[lesson_number].split(u'-')[0],
+                u','.join([unicode(i)
+                           for i in sorted(room_occupation_map[key])])
+            ))
         return result
 
 
@@ -280,14 +291,14 @@ class TimetableItem(models.Model):
 
     def __unicode__(self):
         return u'%s %s [%s] %s - %s / %s [%s]' % (
-                self.get_day_number_display(),
-                self.get_lesson_number_display(),
-                self.room,
-                self.discipline,
-                self.group or u'лекція',
-                self.lecturer,
-                self.weeks,
-                )
+            self.get_day_number_display(),
+            self.get_lesson_number_display(),
+            self.room,
+            self.discipline,
+            self.group or u'лекція',
+            self.lecturer,
+            self.weeks,
+        )
 
 
 class RenderLink(models.Model):
@@ -302,14 +313,16 @@ class Enrollment(models.Model):
     group = models.CharField(max_length=32, null=True, blank=True)
 
 
-Lesson = namedtuple('Lesson', 'date lesson_number room discipline group lecturer')
+Lesson = namedtuple(
+    'Lesson', 'date lesson_number room discipline group lecturer')
+
 
 def items_to_lessons(items, academic_term):
     lessons = []
     for item in items:
         weeks = academic_term.expand_weeks(item.weeks)
         for week in weeks:
-            day = academic_term[week][item.day_number-1]
+            day = academic_term[week][item.day_number - 1]
             lesson = Lesson(
                 day,
                 item.lesson_number,
@@ -317,12 +330,14 @@ def items_to_lessons(items, academic_term):
                 item.discipline,
                 item.group,
                 item.lecturer,
-                )
+            )
             lessons.append(lesson)
     return lessons
 
+
 def load_from_file(fixture_txt):
-    full_filename = os.path.join(settings.SITE_ROOT, 'university', 'fixtures', fixture_txt)
+    full_filename = os.path.join(
+        settings.SITE_ROOT, 'university', 'fixtures', fixture_txt)
     with codecs.open(full_filename, 'r', 'utf8') as f:
         result = f.read().splitlines()
     return result
