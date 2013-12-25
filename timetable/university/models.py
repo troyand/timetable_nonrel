@@ -188,6 +188,7 @@ class TimetableVersion(models.Model):
     approver = models.ForeignKey(
         User, blank=True, null=True, related_name='approved')
     approve_date = models.DateTimeField(blank=True, null=True)
+    remark = models.TextField(blank=True, null=True)
 
     def parents(self):
         result = []

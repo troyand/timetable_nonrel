@@ -25,13 +25,23 @@ with transaction.commit_on_success():
 
 
     for major in Major.objects.all():
-        timetable = Timetable.objects.create(
+        if major.kind == u'бакалавр':
+            years = [1, 2, 3, 4]
+        elif major.kind == u'спеціаліст':
+            years = [1]
+        elif major.kind == u'маґістр' and major.name == u'Правознавство':
+            years = [1]
+        else:
+            years = [1, 2]
+        for year in years:
+            timetable = Timetable.objects.create(
                 major=major,
-                year=1,
+                year=year,
                 academic_term=academic_term,
-                )
-        timetable_version = TimetableVersion.objects.create(
+            )
+            timetable_version = TimetableVersion.objects.create(
                 timetable=timetable,
                 author=user,
                 parent=None,
-                )
+                remark=u'Порожній розклад',
+            )
