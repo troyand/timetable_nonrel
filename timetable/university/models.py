@@ -100,7 +100,7 @@ class AcademicTerm(models.Model):
             self.week_number = week_number
 
         def __getitem__(self, key):
-            if type(key) == type(1):
+            if isinstance(key, int):
                 return self.academic_term.start_date + datetime.timedelta(
                     days=7 * (self.week_number - 1) + key)
             else:
@@ -150,7 +150,7 @@ class AcademicTerm(models.Model):
 
     def __getitem__(self, key):
         """Week getter, at[5][2] gets the wednesday of 5th week"""
-        if type(key) == type(1):
+        if isinstance(key, int):
             return self.Week(academic_term=self, week_number=key)
         else:
             raise AttributeError('Int expected, got %s' % key)
@@ -200,7 +200,9 @@ class TimetableVersion(models.Model):
 
     def serialize_to_table_rows(self):
         result = []
-        for item in self.timetableitem_set.all().order_by('day_number', 'lesson_number', 'pk'):
+        items = self.timetableitem_set.all().order_by(
+            'day_number', 'lesson_number', 'pk')
+        for item in items:
             row = [
                 day_names[item.day_number],
                 lesson_times[item.lesson_number].split(u'-')[0],
