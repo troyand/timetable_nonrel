@@ -20,17 +20,30 @@ def get_potential_duplicates(strings):
     return dups
 
 def get_disciplines(level, program, year, term):
+    def clean_parentheses(s):
+        """Clean junk in parentheses."""
+        try:
+            parenthesis_pos = s.index(u'(')
+            return s[:parenthesis_pos].strip()
+        except ValueError:
+            return s
+
     USIC_API_URL = 'http://api.usic.at/api/v1/courses/subjects'
     response = requests.get(USIC_API_URL, params={
         'level': level.replace(u'ґ', u'г'),
         'program': program,
         'year': year,
         'term': term,
+        'type': u'норм',
         })
-    if not response.json():
+    response_json = response.json()
+    if not response_json:
         return []
-    result = [i for i in response.json().keys()]
-    return result
+    disciplines = []
+    for raw_discipline, credits in response_json.items():
+        if credits != '0':
+            disciplines.append(clean_parentheses(raw_discipline))
+    return disciplines
 
 def lessons_to_events(lessons, lesson_times):
     events = []

@@ -90,7 +90,6 @@ class AcademicTerm(models.Model):
     )
 
     class Week:
-
         def __init__(self, academic_term, week_number):
             if week_number < 0 or week_number > academic_term.number_of_weeks:
                 raise ValueError(u'Invalid week number %d for %s' % (
