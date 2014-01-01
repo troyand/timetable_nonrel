@@ -46,8 +46,16 @@
       </div>
 
       <div class="row marketing">
+          <ul class="nav nav-tabs">
+              {% for faculty, major_list in faculty_major_kind_tt_list %}
+              <li{% if forloop.first %} class="active"{% endif %}>
+              <a href="#faculty-{{ faculty.pk }}" data-toggle="tab">{{ faculty.abbr }}</a>
+              </li>
+              {% endfor %}
+          </ul>
+<div class="tab-content">
 {% for faculty, major_list in faculty_major_kind_tt_list %}
-    <h3>{{ faculty }}</h3>
+    <div class="tab-pane{% if forloop.first %} active{% endif %}" id="faculty-{{ faculty.pk }}">
     {% for major, kind_list in major_list %}
     <h4>{{ major }}</h4>
     <ul>
@@ -60,7 +68,9 @@
         {% endfor %}
     </ul>
     {% endfor %}
+    </div>
 {% endfor %}
+</div>
       </div>
 
       {% endblock %}

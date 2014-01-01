@@ -376,7 +376,7 @@ def home(request):
     faculty_major_kind_tt_map = {}
     for timetable in timetables:
         faculty_major_kind_tt_map.setdefault(
-            timetable.major.faculty.name, {}).setdefault(
+            timetable.major.faculty, {}).setdefault(
                 timetable.major.name, {}).setdefault(
                     timetable.major.kind, {}).setdefault(
                         timetable.year, timetable)
