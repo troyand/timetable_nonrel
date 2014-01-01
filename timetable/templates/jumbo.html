@@ -1,0 +1,78 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>USIC-Розклад</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="{% static "css/bootstrap.css" %}" rel="stylesheet">
+    <!-- Custom styles for this template -->
+    <link href="{% static "css/jumbotron-narrow.css" %}" rel="stylesheet">
+    <script src="{% static "js/jquery.js" %}"></script>
+    <script src="{% static "js/bootstrap.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/jquery.autocomplete-min.js" %}"></script>
+    <script src="{% static "js/timetable.js" %}"></script>
+
+
+    {% block head %}
+    {% endblock %}
+  </head>
+
+  <body>
+
+    <div class="container">
+      <div class="header">
+        <ul class="nav nav-pills pull-right">
+          <li class="active"><a href="#">Home</a></li>
+          <li><a href="#">About</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+        <h3 class="text-muted">USIC-Розклад</h3>
+      </div>
+      {% block body %}
+
+      <div class="jumbotron">
+        <h2>Нове покоління розкладу</h2>
+        <p class="lead">Повністю персональний розклад, який доступний у кілька кліків.
+        Завжди актуальний із можливістю легкого редагування.
+        Тепер ще для більшої кількості спеціальностей.</p>
+        <p><a class="btn btn-lg btn-success" href="/my/" role="button">Увійти через USIC</a></p>
+      </div>
+
+      <div class="row marketing">
+{% for faculty, major_list in faculty_major_kind_tt_list %}
+    <h3>{{ faculty }}</h3>
+    {% for major, kind_list in major_list %}
+    <h4>{{ major }}</h4>
+    <ul>
+        {% for kind, year_list in kind_list %}
+            <li>{{ kind }}
+            {% for year, tt in year_list %}
+                <a href="/tt/{{ tt.pk }}/">{{ year }}</a>
+            {% endfor %}
+            </li>
+        {% endfor %}
+    </ul>
+    {% endfor %}
+{% endfor %}
+      </div>
+
+      {% endblock %}
+      <div class="footer">
+        <p>Неофіційна версія могилянського розкладу від USIC &copy; 2014</p>
+      </div>
+
+    </div> <!-- /container -->
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+  </body>
+</html>

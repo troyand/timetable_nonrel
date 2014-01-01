@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block body %}
+{% for diff in diffs %}
+    {{ diff|safe }}
+    <hr>
+{% endfor %}
+{% endblock %}

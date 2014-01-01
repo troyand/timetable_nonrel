@@ -1,5 +1,22 @@
 {% extends "base.html" %}
 {% block body %}
+{% for faculty, major_list in faculty_major_kind_tt_list %}
+    <h3>{{ faculty }}</h3>
+    {% for major, kind_list in major_list %}
+    <h4>{{ major }}</h4>
+    <ul>
+        {% for kind, year_list in kind_list %}
+            <li>{{ kind }}
+            {% for year, tt in year_list %}
+                <a href="/tt/{{ tt.pk }}/">{{ year }}</a>
+            {% endfor %}
+            </li>
+        {% endfor %}
+    </ul>
+    {% endfor %}
+{% endfor %}
+
+
     {% for timetable in timetables %}
         <h4>{{ timetable }}
             {% for version in timetable.timetableversion_set.all %}

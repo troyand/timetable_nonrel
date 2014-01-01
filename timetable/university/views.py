@@ -1,4 +1,4 @@
-# Create your views here.
+#-*- coding: utf-8 -*-
 
 import base64
 import csv
@@ -13,6 +13,7 @@ from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.utils.datastructures import MultiValueDictKeyError
+from django.utils import timezone
 
 from timetable.university.models import *
 from timetable.university.utils import get_potential_duplicates, get_disciplines, lessons_to_events, academic_terms_to_events, table_diff_lines
@@ -182,7 +183,10 @@ def upload_timetable(request, version_id):
             new_version = TimetableVersion.objects.create(
                     timetable=timetable_version.timetable,
                     author=User.objects.get(username='webmaster'),
+                    approver=User.objects.get(username='webmaster'),
+                    approve_date=timezone.now(),
                     parent=timetable_version,
+                    remark=u'Завантажено через csv-файл',
                     )
             day_names_inverse = {day_name.upper():day_number for day_number, day_name in day_names.items()}
             lesson_times_inverse = {lesson_time:lesson_number for lesson_number, lesson_time in lesson_times.items()}
@@ -259,21 +263,24 @@ def compare(request, version_left, version_right):
                 'context': True,
                 'numlines': 0,
                 }
-    diff_input_pairs = [
-            (tt_version_left.serialize_to_table_rows(), tt_version_right.serialize_to_table_rows()),
-            (tt_version_left.discipline_hours_table_rows(), tt_version_right.discipline_hours_table_rows()),
-            (tt_version_left.lecturer_hours_table_rows(), tt_version_right.lecturer_hours_table_rows()),
-            (tt_version_left.room_occupation_table_rows(), tt_version_right.room_occupation_table_rows()),
-            ]
-    for left, right in diff_input_pairs:
+    methods_descriptions = [
+        ('serialize_to_table_rows', u'Рядки розкладу'),
+        ('discipline_hours_table_rows', u'Години дисциплін'),
+        ('lecturer_hours_table_rows', u'Години викладачів'),
+        ('room_occupation_table_rows', u'Використання аудиторій'),
+    ]
+    for method_name, description in methods_descriptions:
+        left = getattr(tt_version_left, method_name)()
+        right = getattr(tt_version_right, method_name)()
         left_text, right_text = table_diff_lines(
                 left, right, full_diff
                 )
-        diff = difflib.HtmlDiff().make_table(
+        diff = '<h3>%s</h3>' % description
+        diff += difflib.HtmlDiff().make_table(
                 left_text,
                 right_text,
-                tt_version_left.date_created,
-                tt_version_right.date_created,
+                tt_version_left.create_date,
+                tt_version_right.create_date,
                 **diff_kwargs
                 )
         diffs.append(diff)
@@ -308,7 +315,7 @@ def get_lessons_by_link_hash(link_hash):
         timetable = get_object_or_404(Timetable, pk=timetable_id)
         # TODO - add more logic here
         # but for now, just take the latest tt version
-        version = timetable.timetableversion_set.all().order_by('-date_created')[0]
+        version = timetable.timetableversion_set.all().order_by('-create_date')[0]
         all_items = version.timetableitem_set.all()
         filtered_items = []
         for discipline, group in timetable_map[timetable_id]:
@@ -355,14 +362,65 @@ def ical_timetable(request, link_hash):
     return response
 
 def home(request):
+    def itemize(d):
+        """Convert dict to sorted item list recursively"""
+        if not isinstance(d, dict):
+            return d
+        result_list = []
+        for k in sorted(d.keys()):
+            result_list.append((k, itemize(d[k])))
+        return result_list
+
+    #TODO: add active academic term filtering
     timetables = Timetable.objects.all()
+    faculty_major_kind_tt_map = {}
+    for timetable in timetables:
+        faculty_major_kind_tt_map.setdefault(
+            timetable.major.faculty.name, {}).setdefault(
+                timetable.major.name, {}).setdefault(
+                    timetable.major.kind, {}).setdefault(
+                        timetable.year, timetable)
+    faculty_major_kind_tt_list = itemize(faculty_major_kind_tt_map)
     return render_to_response(
-            'home.html',
+            'jumbo.html',
             {
+                'faculty_major_kind_tt_list': faculty_major_kind_tt_list,
                 'timetables': timetables,
                 },
             context_instance=RequestContext(request)
             )
+
+def timetable(request, timetable_id):
+    timetable = get_object_or_404(Timetable, pk=timetable_id)
+    active_version = timetable.active_version()
+    all_versions = timetable.versions()
+    items = active_version.timetableitem_set.all()
+    discipline_group_map = {}
+    for item in items:
+        if item.group:
+            discipline_group_map.setdefault(item.discipline, set()).add(item.group)
+    discipline_group_list = []
+    for discipline, groups in sorted(discipline_group_map.items()):
+        discipline_group_list.append((discipline, sorted(groups)))
+    return render_to_response(
+            'view.html',
+            {
+                'timetable': timetable,
+                'version': active_version,
+                'all_versions': all_versions,
+                'discipline_group_list': discipline_group_list,
+                },
+            context_instance=RequestContext(request)
+            )
+
+
+def enroll(request, timetable_id, discipline, group):
+    return HttpResponse('Ok')
+
+
+def unenroll(request, timetable_id, discipline, group):
+    return HttpResponse('Ok')
+
 
 def autocomplete(request, dataset, limit=10):
     try:

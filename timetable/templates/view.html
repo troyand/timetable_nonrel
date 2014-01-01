@@ -1,22 +1,16 @@
-{% extends "base.html" %}
+{% extends "jumbo.html" %}
 {% block body %}
     <h1>{{ timetable }} - {{ timetable.academic_term.season }} {{ timetable.academic_term.kind }}</h1>
     {% for discipline, groups in discipline_group_list %}
         <div class="row" style="padding-bottom:8px">
-            <div class="col-md-4">
+            <div class="col-md-6">
                 {{ discipline }}
             </div>
-            <div class="btn-group col-md-4" data-toggle="buttons">
+            <div class="btn-group col-md-6" data-toggle="buttons">
                 {% for group in groups %}
-                    {% if group %}
-                        <label class="btn btn-default">
-                            <input type="checkbox" class="group-input" data-toggle="button" data-timetable-id="{{ timetable.pk }}" data-discipline="{{ discipline }}" data-group="{{ group }}">{{ group }}
-                        </label>
-                    {% else %}
-                        <label class="btn btn-default active">
-                            <input type="checkbox" class="group-input" data-toggle="button" data-timetable-id="{{ timetable.pk }}" data-discipline="{{ discipline }}" data-group="null" checked>Лекції
-                        </label>
-                    {% endif %}
+                    <label class="btn btn-default" data-timetable-id="{{ timetable.pk }}" data-discipline="{{ discipline }}" data-group="{{ group }}" onclick="enrollment(this);">
+                        <input type="checkbox" class="group-input" data-toggle="button">{{ group }}
+                    </label>
                 {% endfor %}
             </div>
         </div>
@@ -28,5 +22,27 @@
     {% endif %}
     <a href="/edit/{{ version.pk }}/" class="btn btn-default">Редагувати розклад</a>
     <div><a id="ical-link" style="display:none">Посилання на iCal</a></div>
+    <hr>
+    <h6>Всі версії розкладу</h6>
+    <ul>
+        {% for ver in all_versions %}
+        <li>
+        {{ ver.create_date }} (<i>{{ ver.author }}</i>),
+        {% if ver.approver %}
+        <span class="label label-success">затверджена</span>
+        {{ ver.approve_date }} (<i>{{ ver.approver }}</i>)
+        {% else %}
+        <span class="label label-warning">у розгляді</span>
+        {% endif %}
+        {% if ver == version %}
+        <span class="label label-primary">активна</span>
+        {% endif %}
+        {% if ver.remark %}
+        <div>
+            <i>{{ ver.remark }}</i>
+        </div>
+        {% endif %}
+        </li>
+        {% endfor %}
 
 {% endblock %}

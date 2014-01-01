@@ -172,6 +172,18 @@ class Timetable(models.Model):
     year = models.IntegerField()
     academic_term = models.ForeignKey(AcademicTerm)
 
+    def active_version(self):
+        try:
+            timetable_version = TimetableVersion.objects.filter(
+                timetable=self, approver__isnull=False
+                ).order_by('-approve_date')[0]
+            return timetable_version
+        except TimetableVersion.DoesNotExist:
+            return None
+
+    def versions(self):
+        return TimetableVersion.objects.filter(timetable=self).order_by('-create_date')
+
     def __unicode__(self):
         return u'%s %s %d р.н.' % (
             self.major.name,
@@ -183,7 +195,7 @@ class Timetable(models.Model):
 class TimetableVersion(models.Model):
     timetable = models.ForeignKey(Timetable)
     author = models.ForeignKey(User, related_name='authored')
-    date_created = models.DateTimeField(auto_now_add=True)
+    create_date = models.DateTimeField(auto_now_add=True)
     parent = models.ForeignKey('self', null=True)
     approver = models.ForeignKey(
         User, blank=True, null=True, related_name='approved')

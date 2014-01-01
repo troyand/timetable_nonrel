@@ -57,3 +57,40 @@ function goIcalTimetable(csrfToken) {
         $("#ical-link").attr("href", "/ical/" + data + "/").show();
     });
 }
+
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie != '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = jQuery.trim(cookies[i]);
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+var csrftoken = getCookie('csrftoken');
+
+function enrollment(label) {
+    var jqItem = $(label);
+    var url = "";
+    if (jqItem.hasClass("active")) {
+        url = "/unenroll/";
+    }
+    else {
+        url = "/enroll/";
+    }
+    url += jqItem.data("timetable-id") + "/";
+    url += jqItem.data("discipline") + "/";
+    url += jqItem.data("group") + "/";
+    $.post(url, {
+        csrfmiddlewaretoken: csrftoken
+    }).done(function(data) {
+        return;
+    });
+}
+

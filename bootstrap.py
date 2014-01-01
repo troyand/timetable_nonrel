@@ -6,6 +6,7 @@ from timetable import settings
 setup_environ(settings)
 from django.contrib.auth.models import User
 from django.db import transaction
+from django.utils import timezone
 from timetable.university.models import *
 
 
@@ -42,6 +43,8 @@ with transaction.commit_on_success():
             timetable_version = TimetableVersion.objects.create(
                 timetable=timetable,
                 author=user,
+                approver=user,
+                approve_date=timezone.now(),
                 parent=None,
                 remark=u'Порожній розклад',
             )
