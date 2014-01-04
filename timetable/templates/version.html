@@ -1,0 +1,36 @@
+{% extends "jumbo.html" %}
+{% block body %}
+<h2>{{ timetable }} - {{ timetable.academic_term.season }} {{ timetable.academic_term.kind }}</h2>
+{% if version == active_version %}
+<p>Поточна версія є наразі активною.</p>
+{% endif %}
+<p>Версія від {{ version.create_date }}, автор {{ version.author }}.</p>
+{% if version.approver %}
+<p>Затверджено {{ version.approve_date }}, {{ version.approver }}</p>
+{% else %}
+<p>До розгляду</p>
+{% endif %}
+<a href="/edit/{{ version.pk }}/" class="btn btn-default">Редагувати</a>
+<h4>Порівняти із іншими версіями</h4>
+<ul>
+{% for ver in all_versions %}
+{% if ver != version %}
+<li>
+<a href="/compare/{{ ver.pk }}/{{ version.pk }}/">{{ ver.create_date }}</a> (<i>{{ ver.author }}</i>){% if ver == active_version %}, порівняти із активною версією для затвердження {% endif %}
+{% endif %}
+</li>
+{% endfor %}
+</ul>
+{% for header, rows in header_rows %}
+<h3>{{ header }}</h3>
+<table class="table table-bordered table-striped">
+{% for row in rows %}
+<tr>
+    {% for cell in row %}
+    <td>{{ cell }}</td>
+    {% endfor %}
+</tr>
+{% endfor %}
+</table>
+{% endfor %}
+{% endblock %}

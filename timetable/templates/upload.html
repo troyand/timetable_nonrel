@@ -1,9 +1,15 @@
-{% extends "base.html" %}
+{% extends "jumbo.html" %}
 {% block body %}
-    <h1>{{ timetable }}</h1>
-    <form method="POST" class="form-inline" enctype="multipart/form-data">
+    <h2>{{ timetable }}</h2>
+    {% if error_message %}
+    <div class="alert alert-danger">{{ error_message }}</div>
+    {% endif %}
+    <form method="POST" role="form" enctype="multipart/form-data">
         {% csrf_token %}
-        <input type="file" class="form-control" style="width:300px" name="csv_file">
-        <input type="submit" class="form-control btn-primary" style="width:100px">
+        <div class="form-group">
+            <label for="csv-file">CSV-файл</label>
+            <input type="file" id="csv-file" name="csv_file">
+        </div>
+        <input type="submit" class="btn btn-primary" value="Завантажити">
     </form>
 {% endblock %}

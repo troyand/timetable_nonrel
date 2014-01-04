@@ -32,8 +32,11 @@
             {% endfor %}
         {% endfor %}
     </table>
+    <div style="padding-bottom:8px;">
+        <textarea class="form-control" rows="3" id="remark" placeholder="Ремарка"></textarea>
+    </div>
     <div id="check-timetable-container">
-        <button type="button" class="btn btn-primary" onclick="checkTimetable1(this)" id="check-timetable" data-loading-text="Обробка...">Перевірити та зберегти розклад</button>
+        <button type="button" class="btn btn-primary" onclick="submitTimetable(this)" id="check-timetable" data-loading-text="Обробка...">Зберегти версію розкладу</button>
     </div>
     {% include "load_json_timetable.html" %}
 {% endblock %}

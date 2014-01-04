@@ -1,6 +1,6 @@
 {% extends "jumbo.html" %}
 {% block body %}
-    <h1>{{ timetable }} - {{ timetable.academic_term.season }} {{ timetable.academic_term.kind }}</h1>
+    <h2>{{ timetable }} - {{ timetable.academic_term.season }} {{ timetable.academic_term.kind }}</h2>
     {% for discipline, groups in discipline_group_list %}
         <div class="row" style="padding-bottom:8px">
             <div class="col-md-6">
@@ -17,22 +17,20 @@
     {% endfor %}
     <button class="btn btn-primary" onclick="goRenderTimetable('{{ csrf_token }}')">Переглянути розклад</button>
     <button class="btn btn-primary" onclick="goIcalTimetable('{{ csrf_token }}')">Експортувати в iCal</button>
-    {% if not version.parent %}
-        <a href="/upload/{{ version.pk }}/" class="btn btn-default">Завантажити розклад</a>
-    {% endif %}
-    <a href="/edit/{{ version.pk }}/" class="btn btn-default">Редагувати розклад</a>
+    <a href="/upload/{{ version.pk }}/" class="btn btn-default">Завантажити csv</a>
+    <a href="/edit/{{ version.pk }}/" class="btn btn-default">Редагувати активну версію</a>
     <div><a id="ical-link" style="display:none">Посилання на iCal</a></div>
     <hr>
     <h6>Всі версії розкладу</h6>
     <ul>
         {% for ver in all_versions %}
         <li>
-        {{ ver.create_date }} (<i>{{ ver.author }}</i>),
+        <a href="/version/{{ ver.pk }}/">{{ ver.create_date }}</a> (<i>{{ ver.author }}</i>),
         {% if ver.approver %}
         <span class="label label-success">затверджено</span>
         {{ ver.approve_date }} (<i>{{ ver.approver }}</i>)
         {% else %}
-        <span class="label label-warning">у розгляді</span>
+        <span class="label label-warning">до розгляду</span>
         {% endif %}
         {% if ver == version %}
         <span class="label label-primary">активна</span>

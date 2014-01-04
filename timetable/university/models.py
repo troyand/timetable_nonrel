@@ -220,7 +220,7 @@ class TimetableVersion(models.Model):
                 lesson_times[item.lesson_number].split(u'-')[0],
                 item.room or u'Ø',
                 item.discipline,
-                item.group or u'Л',
+                item.group or u'',
                 item.lecturer or u'Ø',
                 item.weeks,
             ]
@@ -250,7 +250,7 @@ class TimetableVersion(models.Model):
                 else:
                     lecturers = u'Ø'
                 result.append(
-                    (discipline, group or u'Л', lecturers, unicode(count)))
+                    (discipline, group or u'', lecturers, unicode(count)))
         return result
 
     def lecturer_hours_table_rows(self):

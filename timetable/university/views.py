@@ -10,7 +10,7 @@ import hashlib
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseForbidden
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
 from django.utils.datastructures import MultiValueDictKeyError
 from django.utils import timezone
@@ -53,105 +53,6 @@ def edit_timetable(request, version_id):
             context_instance=RequestContext(request)
             )
 
-def check_timetable_1(request, version_id):
-    timetable_version = get_object_or_404(TimetableVersion, pk=version_id)
-    timetable = timetable_version.timetable
-    new_version = TimetableVersion(
-            timetable=timetable_version.timetable,
-            author=User.objects.get(username='webmaster'),
-            parent=timetable_version,
-            )
-    if request.method == 'POST':
-        raw_items = json.loads(request.POST['items'])
-        items = []
-        for raw_item in raw_items:
-            item = TimetableItem(timetable_version=new_version, **raw_item)
-            items.append(item)
-        rooms = sorted(set([i.room for i in items if i.room]))
-        labeled_rooms = []
-        for room in rooms:
-            if room in all_rooms:
-                labeled_rooms.append(('success', room))
-            else:
-                labeled_rooms.append(('warning', room))
-        disciplines = sorted(set([i.discipline for i in items]))
-        labeled_disciplines = []
-        potential_duplicate_disciplines = get_potential_duplicates(disciplines)
-        for discipline in disciplines:
-            if discipline in all_disciplines:
-                labeled_disciplines.append(('success', discipline))
-            elif discipline in potential_duplicate_disciplines:
-                labeled_disciplines.append(('danger', discipline))
-            else:
-                labeled_disciplines.append(('warning', discipline))
-        lecturers = sorted(set([i.lecturer for i in items if i.lecturer]))
-        labeled_lecturers = []
-        potential_duplicate_lecturers = get_potential_duplicates(lecturers)
-        for lecturer in lecturers:
-            if lecturer in all_lecturers:
-                labeled_lecturers.append(('success', lecturer))
-            elif lecturer in potential_duplicate_lecturers:
-                labeled_lecturers.append(('danger', lecturer))
-            else:
-                labeled_lecturers.append(('warning', lecturer))
-        return render_to_response(
-                'check.html',
-                {
-                    'timetable': timetable,
-                    'version': timetable_version,
-                    'labeled_rooms': labeled_rooms,
-                    'labeled_disciplines': labeled_disciplines,
-                    'labeled_lecturers': labeled_lecturers,
-                    },
-                context_instance=RequestContext(request)
-                )
-
-def check_timetable_2(request, version_id):
-    timetable_version = get_object_or_404(TimetableVersion, pk=version_id)
-    timetable = timetable_version.timetable
-    new_version = TimetableVersion(
-            timetable=timetable_version.timetable,
-            author=User.objects.get(username='webmaster'),
-            parent=timetable_version,
-            )
-    if request.method == 'POST':
-        raw_items = json.loads(request.POST['items'])
-        items = []
-        for raw_item in raw_items:
-            item = TimetableItem(timetable_version=new_version, **raw_item)
-            items.append(item)
-        lessons = items_to_lessons(items, timetable.academic_term)
-        discipline_group_map = {}
-        for lesson in lessons:
-            lecturers, count = discipline_group_map.setdefault(lesson.discipline, {}).get(lesson.group, (set(), 0))
-            if lesson.lecturer:
-                lecturers.add(lesson.lecturer)
-            else:
-                lecturers.add(u'')
-            count += 1
-            discipline_group_map[lesson.discipline][lesson.group] = (lecturers, count)
-        discipline_group_list = []
-        for discipline in sorted(discipline_group_map.keys()):
-            # temp local vars
-            l_groups_lecturers = []
-            l_counts = []
-            for group in sorted(discipline_group_map[discipline].keys()):
-                lecturers, count = discipline_group_map[discipline][group]
-                if lecturers:
-                    l_groups_lecturers.append((group, u', '.join(lecturers)))
-                l_counts.append(count)
-            discipline_group_list.append((discipline, l_groups_lecturers, l_counts))
-        return render_to_response(
-                'check-2.html',
-                {
-                    'timetable': timetable,
-                    'version': timetable_version,
-                    'discipline_group_map': discipline_group_map,
-                    'discipline_group_list': discipline_group_list,
-                    },
-                context_instance=RequestContext(request)
-                )
-
 @transaction.commit_on_success
 def submit_timetable(request, version_id):
     timetable_version = get_object_or_404(TimetableVersion, pk=version_id)
@@ -159,6 +60,7 @@ def submit_timetable(request, version_id):
             timetable=timetable_version.timetable,
             author=User.objects.get(username='webmaster'),
             parent=timetable_version,
+            remark=request.POST['remark'],
             )
     new_version.save()
     if request.method == 'POST':
@@ -172,54 +74,59 @@ def submit_timetable(request, version_id):
             }))
 
 
-@transaction.commit_on_success
 def upload_timetable(request, version_id):
     timetable_version = get_object_or_404(TimetableVersion, pk=version_id)
     timetable = timetable_version.timetable
-    if timetable_version.parent:
-        raise HttpResponseForbidden('Forbidden')
+    error_message = ''
     if request.method == 'POST':
         try:
-            new_version = TimetableVersion.objects.create(
-                    timetable=timetable_version.timetable,
-                    author=User.objects.get(username='webmaster'),
-                    approver=User.objects.get(username='webmaster'),
-                    approve_date=timezone.now(),
-                    parent=timetable_version,
-                    remark=u'Завантажено через csv-файл',
-                    )
-            day_names_inverse = {day_name.upper():day_number for day_number, day_name in day_names.items()}
-            lesson_times_inverse = {lesson_time:lesson_number for lesson_number, lesson_time in lesson_times.items()}
-            csv_contents = request.FILES['csv_file']
-            for line in csv.reader(csv_contents):
-                row = [e.decode('utf-8') for e in line]
-                day_name, lesson_time, room, discipline, group, lecturer, weeks = row
-                if group == u'0' or group == u'':
-                    # legacy lecture group
-                    group = None
-                lecturer = lecturer.strip()
-                if lecturer:
-                    candidates = [l for l in all_lecturers if l.startswith(lecturer)]
-                    if len(candidates) == 1:
-                        lecturer = candidates[0]
-                else:
-                    lecturer = None
-                TimetableItem.objects.create(
-                        timetable_version=new_version,
-                        day_number=day_names_inverse[day_name],
-                        lesson_number=lesson_times_inverse[lesson_time],
-                        room=room or None,
-                        discipline=discipline,
-                        group=group,
-                        lecturer=lecturer,
-                        weeks=weeks,
+            with transaction.commit_on_success():
+                new_version = TimetableVersion.objects.create(
+                        timetable=timetable_version.timetable,
+                        author=User.objects.get(username='webmaster'),
+                        approver=User.objects.get(username='webmaster'),
+                        approve_date=timezone.now(),
+                        parent=timetable_version,
+                        remark=u'Завантажено через csv-файл',
                         )
+                day_names_inverse = {day_name.upper():day_number for day_number, day_name in day_names.items()}
+                lesson_times_inverse = {lesson_time:lesson_number for lesson_number, lesson_time in lesson_times.items()}
+                csv_contents = request.FILES['csv_file']
+                for line in csv.reader(csv_contents):
+                    row = [e.decode('utf-8') for e in line]
+                    day_name, lesson_time, room, discipline, group, lecturer, weeks = row
+                    if group == u'0':
+                        # legacy lecture group
+                        group = ''
+                    lecturer = lecturer.strip()
+                    if lecturer:
+                        candidates = [l for l in all_lecturers if l.startswith(lecturer)]
+                        if len(candidates) == 1:
+                            lecturer = candidates[0]
+                    else:
+                        lecturer = None
+                    TimetableItem.objects.create(
+                            timetable_version=new_version,
+                            day_number=day_names_inverse[day_name],
+                            lesson_number=lesson_times_inverse[lesson_time],
+                            room=room or None,
+                            discipline=discipline,
+                            group=group,
+                            lecturer=lecturer,
+                            weeks=weeks,
+                            )
+                return redirect('/tt/%d' % timetable.pk)
         except MultiValueDictKeyError:
             pass
+        except csv.Error, e:
+            error_message = u'Помилка обробки csv-файлу: %s' % e
+        except ValueError:
+            error_message = u'Помилка обробки csv-файлу'
     return render_to_response(
             'upload.html',
             {
                 'timetable': timetable,
+                'error_message': error_message,
                 },
             context_instance=RequestContext(request)
             )
@@ -386,6 +293,7 @@ def home(request):
             {
                 'faculty_major_kind_tt_list': faculty_major_kind_tt_list,
                 'timetables': timetables,
+                'page': 'index',
                 },
             context_instance=RequestContext(request)
             )
@@ -409,6 +317,35 @@ def timetable(request, timetable_id):
                 'version': active_version,
                 'all_versions': all_versions,
                 'discipline_group_list': discipline_group_list,
+                },
+            context_instance=RequestContext(request)
+            )
+
+
+def version(request, version_id):
+    version = get_object_or_404(TimetableVersion, pk=version_id)
+    timetable = version.timetable
+    active_version = timetable.active_version()
+    all_versions = timetable.versions()
+    items = version.timetableitem_set.all()
+    methods_descriptions = [
+        ('serialize_to_table_rows', u'Рядки розкладу'),
+        ('discipline_hours_table_rows', u'Години дисциплін'),
+        ('lecturer_hours_table_rows', u'Години викладачів'),
+        ('room_occupation_table_rows', u'Використання аудиторій'),
+    ]
+    header_rows = []
+    for method_name, description in methods_descriptions:
+        rows = getattr(version, method_name)()
+        header_rows.append((description, rows))
+    return render_to_response(
+            'version.html',
+            {
+                'timetable': timetable,
+                'version': version,
+                'active_version': active_version,
+                'all_versions': all_versions,
+                'header_rows': header_rows,
                 },
             context_instance=RequestContext(request)
             )
