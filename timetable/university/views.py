@@ -138,8 +138,6 @@ def upload_timetable(request, timetable_id):
                 new_version = TimetableVersion.objects.create(
                         timetable=timetable,
                         author=User.objects.get(username='webmaster'),
-                        approver=User.objects.get(username='webmaster'),
-                        approve_date=timezone.now(),
                         remark=u'Завантажено через csv-файл',
                         )
                 day_names_inverse = {day_name.upper():day_number for day_number, day_name in day_names.items()}
