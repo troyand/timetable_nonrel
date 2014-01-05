@@ -174,7 +174,7 @@ class Timetable(models.Model):
 
     def active_version(self):
         try:
-            timetable_version = TimetableVersion.objects.filter(
+            timetable_version = TimetableVersion.objects.select_related().filter(
                 timetable=self, approver__isnull=False
                 ).order_by('-approve_date')[0]
             return timetable_version
@@ -182,7 +182,11 @@ class Timetable(models.Model):
             return None
 
     def versions(self):
-        return TimetableVersion.objects.filter(timetable=self).order_by('-create_date')
+        return TimetableVersion.objects.select_related().select_related(
+            'author', 'approver').filter(timetable=self).order_by('-create_date')
+
+    def items(self):
+        return self.active_version().timetableitem_set.all()
 
     def __unicode__(self):
         return u'%s %s %d р.н.' % (
@@ -196,7 +200,7 @@ class TimetableVersion(models.Model):
     timetable = models.ForeignKey(Timetable)
     author = models.ForeignKey(User, related_name='authored')
     create_date = models.DateTimeField(auto_now_add=True)
-    parent = models.ForeignKey('self', null=True)
+    parent = models.ForeignKey('self', null=True)#TODO deprecated
     approver = models.ForeignKey(
         User, blank=True, null=True, related_name='approved')
     approve_date = models.DateTimeField(blank=True, null=True)
@@ -325,6 +329,9 @@ class Enrollment(models.Model):
     timetable = models.ForeignKey(Timetable)
     discipline = models.CharField(max_length=255)
     group = models.CharField(max_length=32, null=True, blank=True)
+
+    class Meta:
+        unique_together = ('user', 'timetable', 'discipline', 'group')
 
 
 Lesson = namedtuple(

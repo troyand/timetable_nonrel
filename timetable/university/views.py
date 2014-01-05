@@ -8,16 +8,66 @@ import json
 import hashlib
 
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
 from django.utils.datastructures import MultiValueDictKeyError
+from django.utils import formats
 from django.utils import timezone
 
 from timetable.university.models import *
 from timetable.university.utils import get_potential_duplicates, get_disciplines, lessons_to_events, academic_terms_to_events, table_diff_lines
 
+
+def filter_items_by_enrollments(items, enrollments):
+    result = []
+    # O(len(items)*len(enrollments)) - may be do smth with maps to speed up
+    for item in items:
+        for enrollment in enrollments:
+            if (item.discipline == enrollment.discipline
+                and enrollment.group.startswith(item.group or u'')):
+                result.append(item)
+                break
+    return result
+
+def my(request, week=1):
+    week = int(week)
+    user = User.objects.get(username='webmaster')
+    # TODO fetch active academic term from global settings
+    academic_term = AcademicTerm.objects.order_by('-start_date').all()[0]
+    cache_key = 'lessons/%s' % user.username
+    lessons = cache.get(cache_key)
+    if not lessons:
+        enrollments = user.enrollment_set.select_related().all()
+        timetable_enrollments_map = {}
+        for enrollment in enrollments:
+            timetable_enrollments_map.setdefault(
+                enrollment.timetable, []).append(enrollment)
+        lessons = []
+        for timetable, enrollments in timetable_enrollments_map.items():
+            items = filter_items_by_enrollments(timetable.items(), enrollments)
+            lessons.extend(items_to_lessons(items, academic_term))
+        cache.set(cache_key, lessons)
+    result_table = []
+    for date in [academic_term[week][i] for i in range(6)]:
+        date_lessons = [l for l in lessons if l.date == date]
+        result_date_lessons = []
+        for lesson_number in sorted(lesson_times.keys()):
+            time_lessons = [l for l in date_lessons if l.lesson_number == lesson_number]
+            result_date_lessons.append((lesson_times[lesson_number].split('-')[0],
+                                        time_lessons))
+        result_table.append((date, result_date_lessons))
+    return render_to_response(
+            'my.html',
+            {
+                'table': result_table,
+                'active_week': week,
+                'weeks': range(1, academic_term.number_of_weeks + 1),
+                },
+            context_instance=RequestContext(request)
+            )
 
 #@login_required
 def edit_timetable(request, version_id):
@@ -33,11 +83,16 @@ def edit_timetable(request, version_id):
             'weeks').order_by('day_number', 'lesson_number', 'pk')
     season = timetable.academic_term.season
     season_number = timetable.academic_term.SEASONS.index((season, season)) + 1
-    usic_disciplines = get_disciplines(timetable.major.kind,
-            timetable.major.name,
-            timetable.year,
-            season_number,
-            )
+    usic_args = (timetable.major.kind,
+                 timetable.major.name,
+                 timetable.year,
+                 season_number,
+                 )
+    cache_key = 'usic/disciplines/%s/%s/%d/%d' % usic_args
+    usic_disciplines = cache.get(cache_key)
+    if not usic_disciplines:
+        usic_disciplines = get_disciplines(*usic_args)
+        cache.set(cache_key, usic_disciplines, 60*60)
     disciplines = sorted(set([i['discipline'] for i in items] + usic_disciplines))
     return render_to_response(
             'starter_template.html',
@@ -74,9 +129,8 @@ def submit_timetable(request, version_id):
             }))
 
 
-def upload_timetable(request, version_id):
-    timetable_version = get_object_or_404(TimetableVersion, pk=version_id)
-    timetable = timetable_version.timetable
+def upload_timetable(request, timetable_id):
+    timetable = get_object_or_404(Timetable, pk=timetable_id)
     error_message = ''
     if request.method == 'POST':
         try:
@@ -131,32 +185,11 @@ def upload_timetable(request, version_id):
             context_instance=RequestContext(request)
             )
 
-def view_timetable(request, version_id):
-    timetable_version = get_object_or_404(TimetableVersion, pk=version_id)
-    timetable = timetable_version.timetable
-    items = timetable_version.timetableitem_set.all()
-    discipline_group_map = {}
-    for item in items:
-        discipline_group_map.setdefault(item.discipline, set()).add(item.group)
-    discipline_group_list = []
-    for discipline, groups in sorted(discipline_group_map.items()):
-        discipline_group_list.append((discipline, sorted(groups)))
-    #academic_term = timetable.academic_term
-    #lessons = items_to_lessons(timetable.timetableitem_set.all(), academic_term)
-    #for lesson in sorted(lessons):
-    #    print '|'.join([unicode(el) for el in lesson])
-        #pass
-    return render_to_response(
-            'view.html',
-            {
-                'timetable': timetable,
-                'version': timetable_version,
-                'discipline_group_list': discipline_group_list,
-                },
-            context_instance=RequestContext(request)
-            )
-
 def compare(request, version_left, version_right):
+    def label(version):
+        return u'%s (%s)' % (formats.localize(
+            timezone.localtime(version.create_date), True),
+            version.author)
     full_diff = 0
     tt_version_left = get_object_or_404(TimetableVersion, pk=version_left)
     tt_version_right = get_object_or_404(TimetableVersion, pk=version_right)
@@ -186,19 +219,59 @@ def compare(request, version_left, version_right):
         diff += difflib.HtmlDiff().make_table(
                 left_text,
                 right_text,
-                tt_version_left.create_date,
-                tt_version_right.create_date,
+                label(tt_version_left),
+                label(tt_version_right),
                 **diff_kwargs
                 )
         diffs.append(diff)
+    to_approve = (tt_version_left.timetable.active_version() == tt_version_left
+                  and tt_version_left.timetable == tt_version_right.timetable
+                  and not tt_version_right.approver
+                  #and tt_version_right.author != request.user
+                  )
+
     return render_to_response(
             'diff.html',
             {
                 'diffs': diffs,
+                'to_approve': to_approve,
+                'left_version': tt_version_left,
+                'right_version': tt_version_right,
                 },
             context_instance=RequestContext(request)
             )
     return HttpResponse(diff.replace(u'Courier', u'monospace'))
+
+def approve(request, version_left, version_right):
+    tt_version_left = get_object_or_404(TimetableVersion, pk=version_left)
+    tt_version_right = get_object_or_404(TimetableVersion, pk=version_right)
+    error = None
+    if request.method != 'POST':
+        error = u'Некоректний HTTP метод'
+    elif 'valid' not in request.POST:
+        error = u'Необхідно підтвердити перевірку інформації'
+    elif tt_version_right.approver:
+        error = u'Цю версію вже затверджено користувачем %s' % tt_version_right.approver
+    elif tt_version_left.timetable.active_version() != tt_version_left:
+        error = u'База для порівняння не є активною версією'
+    elif tt_version_left.timetable != tt_version_right.timetable:
+        error = u'Несумісні розклади'
+    elif tt_version_right.author == request.user:
+        error = u'Заборонено затверджувати власні версії'
+    else:
+        request.user = User.objects.get(username='webmaster')
+        tt_version_right.approver = request.user
+        tt_version_right.approve_date = timezone.now()
+        tt_version_right.save()
+    return render_to_response(
+            'approve.html',
+            {
+                'error': error,
+                'left_version': tt_version_left,
+                'right_version': tt_version_right,
+                },
+            context_instance=RequestContext(request)
+            )
 
 def get_link(request):
     if request.method == 'POST':
@@ -279,7 +352,7 @@ def home(request):
         return result_list
 
     #TODO: add active academic term filtering
-    timetables = Timetable.objects.all()
+    timetables = Timetable.objects.select_related().all()
     faculty_major_kind_tt_map = {}
     for timetable in timetables:
         faculty_major_kind_tt_map.setdefault(
@@ -307,9 +380,19 @@ def timetable(request, timetable_id):
     for item in items:
         if item.group:
             discipline_group_map.setdefault(item.discipline, set()).add(item.group)
+    user = User.objects.get(username='webmaster')
+    enrollments = Enrollment.objects.filter(user=user, timetable=timetable)
+    enrolled_discipline_group_pairs = []
+    for enrollment in enrollments:
+        enrolled_discipline_group_pairs.append((enrollment.discipline,
+                                                enrollment.group))
     discipline_group_list = []
     for discipline, groups in sorted(discipline_group_map.items()):
-        discipline_group_list.append((discipline, sorted(groups)))
+        group_enrolled = []
+        for group in sorted(groups):
+            group_enrolled.append((
+                group, (discipline, group) in enrolled_discipline_group_pairs))
+        discipline_group_list.append((discipline, group_enrolled))
     return render_to_response(
             'view.html',
             {
@@ -352,10 +435,18 @@ def version(request, version_id):
 
 
 def enroll(request, timetable_id, discipline, group):
+    user = User.objects.get(username='webmaster')
+    timetable = get_object_or_404(Timetable, pk=timetable_id)
+    Enrollment.objects.create(user=user, timetable=timetable,
+                              discipline=discipline, group=group)
     return HttpResponse('Ok')
 
 
 def unenroll(request, timetable_id, discipline, group):
+    user = User.objects.get(username='webmaster')
+    enrollment = get_object_or_404(Enrollment, user=user, timetable__pk=timetable_id,
+                                   discipline=discipline, group=group)
+    enrollment.delete()
     return HttpResponse('Ok')
 
 

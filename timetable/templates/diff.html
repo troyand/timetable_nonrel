@@ -4,4 +4,16 @@
     {{ diff|safe }}
     <hr>
 {% endfor %}
+{% if to_approve %}
+<h3>Затвердження версії від {{ right_version.create_date }} ({{ right_version.author }})</h3>
+<form class="form-inline" id="check-timetable-container" method="POST" action="/approve/{{ left_version.pk }}/{{ right_version.pk }}/" role="form">
+    {% csrf_token %}
+    <div class="checkbox">
+        <label>
+            <input type="checkbox" name="valid"> Інформацію перевірено, зауваження відсутні
+        </label>
+    </div>
+    <button type="submit" class="btn btn-success">Затвердити</button>
+</form>
+{% endif %}
 {% endblock %}

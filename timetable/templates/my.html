@@ -1,0 +1,26 @@
+{% extends "jumbo.html" %}
+{% block body %}
+<ul class="pagination">
+    {% for week in weeks %}
+    {% if week == active_week %}
+    <li class="active"><a>{{ week }}</a></li>
+    {% else %}
+    <li><a href="/my/{{ week }}/">{{ week }}</a></li>
+    {% endif %}
+    {% endfor %}
+</ul>
+<ul>
+    {% for date, time_lessons  in table %}
+    <li>{{ date }}
+    <ul>
+        {% for time, lessons in time_lessons %}
+        <li>{{ time }} {% for lesson in lessons %}
+        <span><b>{{ lesson.room }}</b> {{ lesson.discipline }} {{ lesson.group|default_if_none:'' }} <i>{{ lesson.lecturer }}</i></span>
+        {% endfor %}
+        </li>
+        {% endfor %}
+    </ul>
+    {% endfor %}
+    </li>
+</ul>
+{% endblock %}

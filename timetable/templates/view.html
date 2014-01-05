@@ -7,17 +7,15 @@
                 {{ discipline }}
             </div>
             <div class="btn-group col-md-6" data-toggle="buttons">
-                {% for group in groups %}
-                    <label class="btn btn-default" data-timetable-id="{{ timetable.pk }}" data-discipline="{{ discipline }}" data-group="{{ group }}" onclick="enrollment(this);">
+                {% for group, enrolled in groups %}
+                <label class="btn btn-default{% if enrolled %} active{% endif %}" data-timetable-id="{{ timetable.pk }}" data-discipline="{{ discipline }}" data-group="{{ group }}" onclick="enrollment(this);">
                         <input type="checkbox" class="group-input" data-toggle="button">{{ group }}
                     </label>
                 {% endfor %}
             </div>
         </div>
     {% endfor %}
-    <button class="btn btn-primary" onclick="goRenderTimetable('{{ csrf_token }}')">Переглянути розклад</button>
-    <button class="btn btn-primary" onclick="goIcalTimetable('{{ csrf_token }}')">Експортувати в iCal</button>
-    <a href="/upload/{{ version.pk }}/" class="btn btn-default">Завантажити csv</a>
+    <a href="/upload/{{ timetable.pk }}/" class="btn btn-default">Завантажити csv</a>
     <a href="/edit/{{ version.pk }}/" class="btn btn-default">Редагувати активну версію</a>
     <div><a id="ical-link" style="display:none">Посилання на iCal</a></div>
     <hr>

@@ -1,0 +1,15 @@
+{% extends "jumbo.html" %}
+{% block body %}
+    <h2>{{ timetable }}</h2>
+    {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+    {% else %}
+    <a href="/version/{{ right_version.pk }}">Версію розкладу</a> затверджено.
+    {% endif %}
+    <div>
+        <a href="/compare/{{ left_version.pk }}/{{ right_version.pk }}/">Порівняння</a>
+    </div>
+    <div>
+        <a href="/tt/{{ right_version.timetable.pk }}/">Розклад</a>
+    </div>
+{% endblock %}
