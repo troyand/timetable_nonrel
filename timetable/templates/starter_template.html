@@ -11,7 +11,7 @@
         <input class="form-control group" style="width:80px" placeholder="Група" type="text">
         <input class="form-control lecturer" style="width:200px" placeholder="Викладач">
         <input class="form-control weeks" style="width:160px" placeholder="Тижні" onkeypress="return validateWeeksInputKey(event);">
-        <button type="button" class="btn btn-danger" onclick="deleteLesson(this);" tabindex="-1">Видалити</button>
+        <button type="button" class="btn btn-danger" onclick="deleteLesson(this);" tabindex="-1">–</button>
     </form>
     <table class="table table-bordered">
         {% for day_number, day_name in day_names %}
@@ -26,14 +26,14 @@
                     <td>
                         <div class="items" id="items-{{ day_number }}-{{ lesson_number }}">
                         </div>
-                        <div><button type="button" class="add-lesson btn btn-success" onclick="addLesson(this);">Додати пару</button></div>
+                        <div><button type="button" class="add-lesson btn btn-success" onclick="addLesson(this);">+</button></div>
                     </td>
                 </tr>
             {% endfor %}
         {% endfor %}
     </table>
     <div style="padding-bottom:8px;">
-        <textarea class="form-control" rows="3" id="remark" placeholder="Ремарка"></textarea>
+        <textarea class="form-control" rows="3" id="remark" placeholder="Ремарка щодо редагування"></textarea>
     </div>
     <div id="check-timetable-container">
         <button type="button" class="btn btn-primary" onclick="submitTimetable(this)" id="check-timetable" data-loading-text="Обробка...">Зберегти версію розкладу</button>

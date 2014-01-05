@@ -77,3 +77,8 @@ body {
     border-bottom: 0;
   }
 }
+
+.week-pagination {
+    min-width: 42px;
+    text-align: center;
+}

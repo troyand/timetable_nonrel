@@ -51,15 +51,16 @@
     <div class="tab-pane{% if forloop.first %} active{% endif %}" id="faculty-{{ faculty.pk }}">
     {% for major, kind_list in major_list %}
     <h4>{{ major }}</h4>
-    <ul>
+    <div class="row">
         {% for kind, year_list in kind_list %}
-            <li>{{ kind }}
+            <div class="col-xs-2" style="height:34px;line-height:34px;">{{ kind }}</div>
+            <div class="col-xs-4" style="padding-bottom:10px">
             {% for year, tt in year_list %}
-                <a href="/tt/{{ tt.pk }}/">{{ year }}</a>
+                <a class="btn btn-primary" href="/tt/{{ tt.pk }}/">{{ year }}</a>
             {% endfor %}
-            </li>
+            </div>
         {% endfor %}
-    </ul>
+    </div>
     {% endfor %}
     </div>
 {% endfor %}

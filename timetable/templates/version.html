@@ -1,6 +1,6 @@
 {% extends "jumbo.html" %}
 {% block body %}
-<h2>{{ timetable }} - {{ timetable.academic_term.season }} {{ timetable.academic_term.kind }}</h2>
+<h2>{{ timetable }} – {{ timetable.academic_term.season }} {{ timetable.academic_term.kind }} {{ timetable.academic_term.year }}-{{ timetable.academic_term.year|add:"1" }}</h2>
 {% if version == active_version %}
 <p>Поточна версія є наразі активною.</p>
 {% endif %}
@@ -10,6 +10,10 @@
 {% else %}
 <p>До розгляду</p>
 {% endif %}
+{% if version.remark %}
+<blockquote><p>{{ version.remark }}</p></blockquote>
+{% endif %}
+</p>
 <a href="/edit/{{ version.pk }}/" class="btn btn-default">Редагувати</a>
 <h4>Порівняти із іншими версіями</h4>
 <ul>

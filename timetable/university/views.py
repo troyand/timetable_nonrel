@@ -64,6 +64,7 @@ def my(request, week=1):
             {
                 'table': result_table,
                 'active_week': week,
+                'academic_term': academic_term,
                 'weeks': range(1, academic_term.number_of_weeks + 1),
                 },
             context_instance=RequestContext(request)

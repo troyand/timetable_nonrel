@@ -3,9 +3,9 @@
 <ul class="pagination">
     {% for week in weeks %}
     {% if week == active_week %}
-    <li class="active"><a>{{ week }}</a></li>
+    <li class="active"><a class="week-pagination">{{ week }}</a></li>
     {% else %}
-    <li><a href="/my/{{ week }}/">{{ week }}</a></li>
+    <li><a class="week-pagination" href="/my/{{ week }}/">{{ week }}</a></li>
     {% endif %}
     {% endfor %}
 </ul>

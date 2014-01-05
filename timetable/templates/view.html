@@ -1,12 +1,12 @@
 {% extends "jumbo.html" %}
 {% block body %}
-    <h2>{{ timetable }} - {{ timetable.academic_term.season }} {{ timetable.academic_term.kind }}</h2>
+<h2>{{ timetable }} – {{ timetable.academic_term.season }} {{ timetable.academic_term.kind }} {{ timetable.academic_term.year }}-{{ timetable.academic_term.year|add:"1" }}</h2>
     {% for discipline, groups in discipline_group_list %}
         <div class="row" style="padding-bottom:8px">
-            <div class="col-md-6">
+            <div class="col-xs-6">
                 {{ discipline }}
             </div>
-            <div class="btn-group col-md-6" data-toggle="buttons">
+            <div class="btn-group col-xs-6" data-toggle="buttons">
                 {% for group, enrolled in groups %}
                 <label class="btn btn-default{% if enrolled %} active{% endif %}" data-timetable-id="{{ timetable.pk }}" data-discipline="{{ discipline }}" data-group="{{ group }}" onclick="enrollment(this);">
                         <input type="checkbox" class="group-input" data-toggle="button">{{ group }}

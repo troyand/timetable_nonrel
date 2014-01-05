@@ -1,6 +1,6 @@
 {% extends "jumbo.html" %}
 {% block body %}
-    <h2>{{ timetable }}</h2>
+    <h2>{{ timetable }} – {{ timetable.academic_term.season }} {{ timetable.academic_term.kind }} {{ timetable.academic_term.year }}-{{ timetable.academic_term.year|add:"1" }}</h2>
     {% if error_message %}
     <div class="alert alert-danger">{{ error_message }}</div>
     {% endif %}

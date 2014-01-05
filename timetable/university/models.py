@@ -189,7 +189,7 @@ class Timetable(models.Model):
         return self.active_version().timetableitem_set.all()
 
     def __unicode__(self):
-        return u'%s %s %d р.н.' % (
+        return u'%s %s-%d' % (
             self.major.name,
             self.major.kind,
             self.year,
