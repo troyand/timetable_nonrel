@@ -438,6 +438,8 @@ def enroll(request, timetable_id, discipline, group):
     timetable = get_object_or_404(Timetable, pk=timetable_id)
     Enrollment.objects.create(user=user, timetable=timetable,
                               discipline=discipline, group=group)
+    cache_key = 'lessons/%s' % user.username
+    cache.delete(cache_key)
     return HttpResponse('Ok')
 
 
@@ -446,6 +448,8 @@ def unenroll(request, timetable_id, discipline, group):
     enrollment = get_object_or_404(Enrollment, user=user, timetable__pk=timetable_id,
                                    discipline=discipline, group=group)
     enrollment.delete()
+    cache_key = 'lessons/%s' % user.username
+    cache.delete(cache_key)
     return HttpResponse('Ok')
 
 
