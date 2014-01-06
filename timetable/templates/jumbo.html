@@ -30,13 +30,15 @@
       {% include "header.html" %}
       {% block body %}
 
+      {% if not user.is_authenticated %}
       <div class="jumbotron">
         <h2>Нове покоління розкладу</h2>
         <p class="lead">Повністю персональний розклад, який доступний у кілька кліків.
         Завжди актуальний із можливістю легкого редагування.
         Тепер ще для більшої кількості спеціальностей.</p>
-        <p><a class="btn btn-lg btn-success" href="/my/" role="button">Увійти через USIC</a></p>
+        <p><a class="btn btn-lg btn-success" href="/accounts/profile/" role="button">Увійти через USIC</a></p>
       </div>
+      {% endif %}
 
       <div class="row marketing">
           <ul class="nav nav-tabs">

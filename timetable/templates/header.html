@@ -2,6 +2,12 @@
     <ul class="nav nav-pills pull-right">
         <li{% if page == "index" %} class="active"{% endif %}><a href="/">Головна</a></li>
         <li{% if page == "info" %} class="active"{% endif %}><a href="/info/">Інфо</a></li>
+        {% if user.is_authenticated %}
+        <li{% if page == "profile" %} class="active"{% endif %}><a href="/accounts/profile/">{{ user }}</a></li>
+        <li><a href="/accounts/logout/">Вихід</a></li>
+        {% else %}
+        <li><a href="/accounts/login/">Вхід</a></li>
+        {% endif %}
     </ul>
     <h3 class="text-muted">USIC-Розклад</h3>
 </div>

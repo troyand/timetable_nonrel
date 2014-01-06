@@ -14,6 +14,12 @@
                 {% endfor %}
             </div>
         </div>
+    {% empty %}
+    <div>
+        Схоже, що розклад порожній.
+        Спочатку його треба наповнити, завантаживши csv-файл чи відредагувавши вручну.
+        <hr>
+    </div>
     {% endfor %}
     <a href="/upload/{{ timetable.pk }}/" class="btn btn-default">Завантажити csv</a>
     <a href="/edit/{{ version.pk }}/" class="btn btn-default">Редагувати активну версію</a>

@@ -7,7 +7,11 @@ from django.conf.urls import patterns, include, url
 urlpatterns = patterns('',
     # Examples:
     url(r'^$', 'timetable.university.views.home', name='home'),
+    url(r'^info/$', 'timetable.university.views.info'),
     url(r'^accounts/login/$', 'django_usic_sso.views.login', name='login'),
+#    url(r'^accounts/login/$', 'timetable.university.auth_debug.login', name='login'),
+    url(r'^accounts/logout/$', 'django.contrib.auth.views.logout', name='logout'),
+    url(r'^accounts/profile/$', 'timetable.university.views.profile', name='profile'),
     url(r'^my/$', 'timetable.university.views.my'),
     url(r'^my/(?P<week>\d+)/$', 'timetable.university.views.my'),
     url(r'^ical/$', 'timetable.university.views.ical'),

@@ -1,0 +1,33 @@
+{% extends "jumbo.html" %}
+{% block body %}
+<h2>{{ user }}</h2>
+<h4><a href="/my/">Мій розклад</a></h4>
+
+<hr>
+<h4>Мої записи на дисципліни</h4>
+<ul>
+    {% for timetable, enrollments in timetable_enrollments_map.items %}
+    <li><a href="/tt/{{ timetable.pk }}/">{{ timetable }}</a>
+    <ul>
+        {% for enrollment in enrollments %}
+        <li>{{ enrollment.discipline }} — Група {{ enrollment.group }}</li>
+        {% endfor %}
+    </ul>
+    </li>
+    {% empty %}
+    Жодних записів нема, необхідно записатись на сторінці розкладу відповідної спеціальності. <a href="/">Перейти до вибору розкладу</a>.
+    {% endfor %}
+</ul>
+
+<hr>
+
+<div class="form-horizontal">
+    <div class="form-group">
+        <label for="ical" class="col-sm-3 control-label">Приватний iCal-лінк</label>
+        <div class="col-sm-9">
+            <input class="form-control" id="ical" type="text" onclick="this.select();" value="{{ ical_link }}">
+        </div>
+    </div>
+</div>
+
+{% endblock %}

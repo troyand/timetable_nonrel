@@ -49,9 +49,10 @@ def get_user_lessons(user, academic_term, cache_timeout=30):
         cache.set(cache_key, lessons, cache_timeout)
     return lessons
 
+@login_required
 def my(request, week=1):
     week = int(week)
-    user = User.objects.get(username='webmaster')
+    user = request.user
     # TODO fetch active academic term from global settings
     academic_term = AcademicTerm.objects.order_by('-start_date').all()[0]
     lessons = get_user_lessons(user, academic_term)
@@ -75,8 +76,9 @@ def my(request, week=1):
             context_instance=RequestContext(request)
             )
 
+@login_required
 def ical(request):
-    user = User.objects.get(username='webmaster')
+    user = request.user
     # TODO fetch active academic term from global settings
     academic_term = AcademicTerm.objects.order_by('-start_date').all()[0]
     lessons = get_user_lessons(user, academic_term)
@@ -94,7 +96,7 @@ def ical(request):
     response['Content-Disposition'] = 'attachment; filename=timetable.ics'
     return response
 
-#@login_required
+@login_required
 def edit_timetable(request, version_id):
     version = get_object_or_404(TimetableVersion, pk=version_id)
     timetable = version.timetable
@@ -133,12 +135,13 @@ def edit_timetable(request, version_id):
             context_instance=RequestContext(request)
             )
 
+@login_required
 @transaction.commit_on_success
 def submit_timetable(request, version_id):
     timetable_version = get_object_or_404(TimetableVersion, pk=version_id)
     new_version = TimetableVersion(
             timetable=timetable_version.timetable,
-            author=User.objects.get(username='webmaster'),
+            author=request.user,
             parent=timetable_version,
             remark=request.POST['remark'],
             )
@@ -154,6 +157,7 @@ def submit_timetable(request, version_id):
             }))
 
 
+@login_required
 def upload_timetable(request, timetable_id):
     timetable = get_object_or_404(Timetable, pk=timetable_id)
     error_message = ''
@@ -162,7 +166,7 @@ def upload_timetable(request, timetable_id):
             with transaction.commit_on_success():
                 new_version = TimetableVersion.objects.create(
                         timetable=timetable,
-                        author=User.objects.get(username='webmaster'),
+                        author=request.user,
                         remark=u'Завантажено через csv-файл',
                         )
                 day_names_inverse = {day_name.upper():day_number for day_number, day_name in day_names.items()}
@@ -264,6 +268,7 @@ def compare(request, version_left, version_right):
             )
     return HttpResponse(diff.replace(u'Courier', u'monospace'))
 
+@login_required
 def approve(request, version_left, version_right):
     tt_version_left = get_object_or_404(TimetableVersion, pk=version_left)
     tt_version_right = get_object_or_404(TimetableVersion, pk=version_right)
@@ -281,7 +286,6 @@ def approve(request, version_left, version_right):
     elif tt_version_right.author == request.user:
         error = u'Заборонено затверджувати власні версії'
     else:
-        request.user = User.objects.get(username='webmaster')
         tt_version_right.approver = request.user
         tt_version_right.approve_date = timezone.now()
         tt_version_right.save()
@@ -393,6 +397,14 @@ def home(request):
             context_instance=RequestContext(request)
             )
 
+def info(request):
+    return render_to_response(
+        'info.html',
+        {
+        },
+        context_instance=RequestContext(request)
+    )
+
 def timetable(request, timetable_id):
     timetable = get_object_or_404(Timetable, pk=timetable_id)
     active_version = timetable.active_version()
@@ -402,12 +414,15 @@ def timetable(request, timetable_id):
     for item in items:
         if item.group:
             discipline_group_map.setdefault(item.discipline, set()).add(item.group)
-    user = User.objects.get(username='webmaster')
-    enrollments = Enrollment.objects.filter(user=user, timetable=timetable)
-    enrolled_discipline_group_pairs = []
-    for enrollment in enrollments:
-        enrolled_discipline_group_pairs.append((enrollment.discipline,
-                                                enrollment.group))
+    if request.user.is_authenticated():
+        user = request.user
+        enrollments = Enrollment.objects.filter(user=user, timetable=timetable)
+        enrolled_discipline_group_pairs = []
+        for enrollment in enrollments:
+            enrolled_discipline_group_pairs.append((enrollment.discipline,
+                                                    enrollment.group))
+    else:
+        enrolled_discipline_group_pairs = []
     discipline_group_list = []
     for discipline, groups in sorted(discipline_group_map.items()):
         group_enrolled = []
@@ -456,8 +471,9 @@ def version(request, version_id):
             )
 
 
+@login_required
 def enroll(request, timetable_id, discipline, group):
-    user = User.objects.get(username='webmaster')
+    user = request.user
     timetable = get_object_or_404(Timetable, pk=timetable_id)
     Enrollment.objects.create(user=user, timetable=timetable,
                               discipline=discipline, group=group)
@@ -465,9 +481,9 @@ def enroll(request, timetable_id, discipline, group):
     cache.delete(cache_key)
     return HttpResponse('Ok')
 
-
+@login_required
 def unenroll(request, timetable_id, discipline, group):
-    user = User.objects.get(username='webmaster')
+    user = request.user
     enrollment = get_object_or_404(Enrollment, user=user, timetable__pk=timetable_id,
                                    discipline=discipline, group=group)
     enrollment.delete()
@@ -475,6 +491,23 @@ def unenroll(request, timetable_id, discipline, group):
     cache.delete(cache_key)
     return HttpResponse('Ok')
 
+@login_required
+def profile(request):
+    user = request.user
+    enrollments = user.enrollment_set.select_related().all()
+    timetable_enrollments_map = {}
+    for enrollment in enrollments:
+        timetable_enrollments_map.setdefault(
+            enrollment.timetable, []).append(enrollment)
+    return render_to_response(
+        'registration/profile.html',
+        {
+            'page': 'profile',
+            'ical_link': request.build_absolute_uri('/ical/TODO/'),
+            'timetable_enrollments_map': timetable_enrollments_map,
+        },
+        context_instance=RequestContext(request)
+    )
 
 def autocomplete(request, dataset, limit=10):
     try:
