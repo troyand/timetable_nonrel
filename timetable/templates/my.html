@@ -1,6 +1,7 @@
 {% extends "jumbo.html" %}
 {% block body %}
 <ul class="pagination">
+    <li class="disabled"><a>Тижні</a></li>
     {% for week in weeks %}
     {% if week == active_week %}
     <li class="active"><a class="week-pagination">{{ week }}</a></li>

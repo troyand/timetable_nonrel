@@ -7,6 +7,7 @@ import icalendar
 import json
 import hashlib
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.db import transaction
@@ -32,11 +33,7 @@ def filter_items_by_enrollments(items, enrollments):
                 break
     return result
 
-def my(request, week=1):
-    week = int(week)
-    user = User.objects.get(username='webmaster')
-    # TODO fetch active academic term from global settings
-    academic_term = AcademicTerm.objects.order_by('-start_date').all()[0]
+def get_user_lessons(user, academic_term, cache_timeout=30):
     cache_key = 'lessons/%s' % user.username
     lessons = cache.get(cache_key)
     if not lessons:
@@ -49,7 +46,15 @@ def my(request, week=1):
         for timetable, enrollments in timetable_enrollments_map.items():
             items = filter_items_by_enrollments(timetable.items(), enrollments)
             lessons.extend(items_to_lessons(items, academic_term))
-        cache.set(cache_key, lessons)
+        cache.set(cache_key, lessons, cache_timeout)
+    return lessons
+
+def my(request, week=1):
+    week = int(week)
+    user = User.objects.get(username='webmaster')
+    # TODO fetch active academic term from global settings
+    academic_term = AcademicTerm.objects.order_by('-start_date').all()[0]
+    lessons = get_user_lessons(user, academic_term)
     result_table = []
     for date in [academic_term[week][i] for i in range(6)]:
         date_lessons = [l for l in lessons if l.date == date]
@@ -69,6 +74,25 @@ def my(request, week=1):
                 },
             context_instance=RequestContext(request)
             )
+
+def ical(request):
+    user = User.objects.get(username='webmaster')
+    # TODO fetch active academic term from global settings
+    academic_term = AcademicTerm.objects.order_by('-start_date').all()[0]
+    lessons = get_user_lessons(user, academic_term)
+    calendar = icalendar.Calendar()
+    calendar.add('prodid', '-//USIC timetable//')
+    calendar.add('version', '2.0')
+    for event in lessons_to_events(lessons, lesson_times):
+        calendar.add_component(event)
+    for event in academic_terms_to_events([academic_term]):
+        calendar.add_component(event)
+    response = HttpResponse(
+            calendar.to_ical(),
+            mimetype='text/calendar; charset=UTF-8',
+            )
+    response['Content-Disposition'] = 'attachment; filename=timetable.ics'
+    return response
 
 #@login_required
 def edit_timetable(request, version_id):
