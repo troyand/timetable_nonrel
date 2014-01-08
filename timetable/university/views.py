@@ -115,14 +115,14 @@ def edit_timetable(request, version_id):
                  timetable.year,
                  season_number,
                  )
-    cache_key = 'usic/disciplines/%s/%s/%d/%d' % usic_args
+    cache_key = 'usic/disciplines/%d' % timetable.pk
     usic_disciplines = cache.get(cache_key)
     if not usic_disciplines:
         usic_disciplines = get_disciplines(*usic_args)
         cache.set(cache_key, usic_disciplines, 60*60)
     disciplines = sorted(set([i['discipline'] for i in items] + usic_disciplines))
     return render_to_response(
-            'starter_template.html',
+            'edit.html',
             {
                 'timetable': timetable,
                 'version': version,
