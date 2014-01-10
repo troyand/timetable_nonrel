@@ -38,18 +38,4 @@
     {% endfor %}
     {% endfor %}
 </table>
-<ul>
-    {% for date, time_lessons  in list %}
-    <li>{{ date }}
-    <ul>
-        {% for time, lessons in time_lessons %}
-        <li>{{ time }} {% for lesson in lessons %}
-        <span><b>{{ lesson.room }}</b> {{ lesson.discipline }} {{ lesson.group|default_if_none:'' }} <i>{{ lesson.lecturer }}</i></span>
-        {% endfor %}
-        </li>
-        {% endfor %}
-    </ul>
-    {% endfor %}
-    </li>
-</ul>
 {% endblock %}
