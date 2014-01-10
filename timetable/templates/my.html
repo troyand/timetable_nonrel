@@ -10,8 +10,36 @@
     {% endif %}
     {% endfor %}
 </ul>
+
+<table class="table table-striped table-bordered">
+    {% for date, rows in table %}
+    <tr>
+        <td class="time-col"></td>
+        <td><h4>{{ date|date:"l" }} <small>{{ date }}</small></h4></td>
+    </tr>
+    {% for row in rows %}
+    <tr>
+        {% for cell in row %}
+        {% if forloop.first %}<td class="time-col">{{ cell }}</td>
+        {% else %}
+        <td>
+            {% for lesson in cell %}
+            <div class="lesson">
+            <span class="label label-primary">{{ lesson.room }}</span>&nbsp;
+            {{ lesson.discipline }}&nbsp;
+            <span class="label" style="background-color:{{ lesson.color }}">{% if lesson.group %}Група {{ lesson.group }}{% else %}Лекція{% endif %}</span>&nbsp;
+            <i class="pull-right">{{ lesson.lecturer }}</i>
+            </div>
+            {% endfor %}
+        </td>
+        {% endif %}
+        {% endfor %}
+    </tr>
+    {% endfor %}
+    {% endfor %}
+</table>
 <ul>
-    {% for date, time_lessons  in table %}
+    {% for date, time_lessons  in list %}
     <li>{{ date }}
     <ul>
         {% for time, lessons in time_lessons %}

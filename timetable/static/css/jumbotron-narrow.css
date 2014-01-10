@@ -82,3 +82,8 @@ body {
     min-width: 42px;
     text-align: center;
 }
+
+.time-col {
+    width: 50px;
+    font-weight: bold;
+}

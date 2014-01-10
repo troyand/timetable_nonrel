@@ -6,6 +6,7 @@ import difflib
 import icalendar
 import json
 import hashlib
+import random
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -65,10 +66,24 @@ def my(request, week=1):
             result_date_lessons.append((lesson_times[lesson_number].split('-')[0],
                                         time_lessons))
         result_table.append((date, result_date_lessons))
+    ### table-style
+    table = []
+    for date in [academic_term[week][i] for i in range(6)]:
+        rows = []
+        for lesson_number in sorted(lesson_times.keys()):
+            row = [lesson_times[lesson_number].split('-')[0]]
+            dt_lessons = [l for l in lessons if l.lesson_number == lesson_number and
+                          l.date == date]
+            if dt_lessons:
+                print dt_lessons[0].color()
+            row.append(dt_lessons)
+            rows.append(row)
+        table.append((date, rows))
     return render_to_response(
             'my.html',
             {
-                'table': result_table,
+                'list': result_table,
+                'table': table,
                 'active_week': week,
                 'academic_term': academic_term,
                 'weeks': range(1, academic_term.number_of_weeks + 1),
@@ -76,9 +91,9 @@ def my(request, week=1):
             context_instance=RequestContext(request)
             )
 
-@login_required
-def ical(request):
-    user = request.user
+def ical(request, url):
+    ical_link = get_object_or_404(IcalLink, url=url)
+    user = ical_link.user
     # TODO fetch active academic term from global settings
     academic_term = AcademicTerm.objects.order_by('-start_date').all()[0]
     lessons = get_user_lessons(user, academic_term)
@@ -499,11 +514,16 @@ def profile(request):
     for enrollment in enrollments:
         timetable_enrollments_map.setdefault(
             enrollment.timetable, []).append(enrollment)
+    try:
+        ical_link = IcalLink.objects.get(user=user)
+    except IcalLink.DoesNotExist:
+        ical_link = IcalLink(user=user, url='%016x' % random.getrandbits(64))
+        ical_link.save()
     return render_to_response(
         'registration/profile.html',
         {
             'page': 'profile',
-            'ical_link': request.build_absolute_uri('/ical/TODO/'),
+            'ical_url': request.build_absolute_uri('/ical/%s/' % ical_link.url),
             'timetable_enrollments_map': timetable_enrollments_map,
         },
         context_instance=RequestContext(request)

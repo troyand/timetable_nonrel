@@ -1,7 +1,9 @@
 #-*- coding: utf-8 -*-
 
+import colorsys
 import datetime
 import os
+import operator
 import codecs
 
 from collections import namedtuple
@@ -320,8 +322,14 @@ class TimetableItem(models.Model):
 
 
 class RenderLink(models.Model):
+    #DEPRECATED
     link_hash = models.CharField(max_length=32)
     groups_json = models.TextField()
+
+
+class IcalLink(models.Model):
+    user = models.ForeignKey(User)
+    url = models.CharField(max_length=32, unique=True)
 
 
 class Enrollment(models.Model):
@@ -337,6 +345,31 @@ class Enrollment(models.Model):
 Lesson = namedtuple(
     'Lesson', 'date lesson_number room discipline group lecturer')
 
+
+def palette(size):
+    for i in range(2, size/2 + 1):
+        if size % i == 0:
+            raise Exception(
+                    'Palette size must be a prime number. '
+                    '%d has a divisor %d' % (size, i)
+                    )
+    base_element = 3
+    current_element = base_element
+    for i in range(size):
+        rgb_tuple = colorsys.hsv_to_rgb(
+            float(current_element) / size,
+            1,
+            0.4 + 0.1 * (current_element % 7))
+        hexcolor = '#%02x%02x%02x' % tuple(
+            map(lambda x: int(x * 255), rgb_tuple))
+        yield hexcolor
+        current_element = (current_element * base_element) % size
+
+_palette_size = 401
+_base_palette = list(palette(401))
+
+Lesson.color = lambda self: _base_palette[reduce(
+    operator.xor, map(ord, self.discipline)) % _palette_size]
 
 def items_to_lessons(items, academic_term):
     lessons = []
