@@ -1,9 +1,8 @@
 #-*- coding: utf-8 -*-
 
-from django.core.management import setup_environ
-from timetable import settings
+import os
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'timetable.settings')
 
-setup_environ(settings)
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.utils import timezone
