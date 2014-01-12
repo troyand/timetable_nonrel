@@ -34,7 +34,6 @@ def get_disciplines(level, program, year, term):
         'program': program,
         'year': year,
         'term': term,
-        'type': u'норм',
         })
     response_json = response.json()
     if not response_json:
