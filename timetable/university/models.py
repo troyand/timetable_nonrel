@@ -137,6 +137,7 @@ class AcademicTerm(models.Model):
     start_date = models.DateField()
     exams_start_date = models.DateField()
     exams_end_date = models.DateField()
+    is_active = models.BooleanField(default=False)
 
     def __unicode__(self):
         return u'%s: %s %s %d-%d навчального року (%d т. із %s)' % (

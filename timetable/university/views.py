@@ -35,10 +35,11 @@ def filter_items_by_enrollments(items, enrollments):
     return result
 
 def get_user_lessons(user, academic_term, cache_timeout=30):
-    cache_key = 'lessons/%s' % user.username
+    cache_key = 'lessons/%s/%d' % (user.username, academic_term.pk)
     lessons = cache.get(cache_key)
     if not lessons:
-        enrollments = user.enrollment_set.select_related().all()
+        enrollments = user.enrollment_set.select_related().filter(
+            timetable__academic_term=academic_term)
         timetable_enrollments_map = {}
         for enrollment in enrollments:
             timetable_enrollments_map.setdefault(
@@ -55,38 +56,33 @@ def my(request, week=1):
     week = int(week)
     user = request.user
     # TODO fetch active academic term from global settings
-    academic_term = AcademicTerm.objects.order_by('-start_date').all()[0]
-    lessons = get_user_lessons(user, academic_term)
-    result_table = []
-    for date in [academic_term[week][i] for i in range(6)]:
-        date_lessons = [l for l in lessons if l.date == date]
-        result_date_lessons = []
-        for lesson_number in sorted(lesson_times.keys()):
-            time_lessons = [l for l in date_lessons if l.lesson_number == lesson_number]
-            result_date_lessons.append((lesson_times[lesson_number].split('-')[0],
-                                        time_lessons))
-        result_table.append((date, result_date_lessons))
-    ### table-style
     table = []
-    for date in [academic_term[week][i] for i in range(6)]:
+    academic_terms = AcademicTerm.objects.filter(is_active=True)
+    active_user_academic_term = academic_terms[0]
+    lessons = []
+    for academic_term in academic_terms:
+        at_lessons = get_user_lessons(user, academic_term)
+        if not lessons and at_lessons:
+            active_user_academic_term = academic_term
+        lessons.extend(at_lessons)
+        if active_user_academic_term.number_of_weeks < academic_term.number_of_weeks:
+            active_user_academic_term = academic_term
+    for date in [active_user_academic_term[week][i] for i in range(6)]:
         rows = []
         for lesson_number in sorted(lesson_times.keys()):
             row = [lesson_times[lesson_number].split('-')[0]]
             dt_lessons = [l for l in lessons if l.lesson_number == lesson_number and
                           l.date == date]
-            if dt_lessons:
-                print dt_lessons[0].color()
             row.append(dt_lessons)
             rows.append(row)
         table.append((date, rows))
     return render_to_response(
             'my.html',
             {
-                'list': result_table,
                 'table': table,
                 'active_week': week,
-                'academic_term': academic_term,
-                'weeks': range(1, academic_term.number_of_weeks + 1),
+                'academic_term': active_user_academic_term,
+                'weeks': range(1, active_user_academic_term.number_of_weeks + 1),
                 },
             context_instance=RequestContext(request)
             )
@@ -94,16 +90,17 @@ def my(request, week=1):
 def ical(request, url):
     ical_link = get_object_or_404(IcalLink, url=url)
     user = ical_link.user
-    # TODO fetch active academic term from global settings
-    academic_term = AcademicTerm.objects.order_by('-start_date').all()[0]
-    lessons = get_user_lessons(user, academic_term)
     calendar = icalendar.Calendar()
-    calendar.add('prodid', '-//USIC timetable//')
-    calendar.add('version', '2.0')
-    for event in lessons_to_events(lessons, lesson_times):
-        calendar.add_component(event)
-    for event in academic_terms_to_events([academic_term]):
-        calendar.add_component(event)
+    academic_terms = AcademicTerm.objects.filter(is_active=True)
+    for academic_term in academic_terms:
+        lessons = get_user_lessons(user, academic_term)
+        calendar.add('prodid', '-//USIC timetable//')
+        calendar.add('version', '2.0')
+        for event in lessons_to_events(lessons, lesson_times):
+            calendar.add_component(event)
+        if lessons:
+            for event in academic_terms_to_events([academic_term]):
+                calendar.add_component(event)
     response = HttpResponse(
             calendar.to_ical(),
             mimetype='text/calendar; charset=UTF-8',
@@ -492,8 +489,9 @@ def enroll(request, timetable_id, discipline, group):
     timetable = get_object_or_404(Timetable, pk=timetable_id)
     Enrollment.objects.create(user=user, timetable=timetable,
                               discipline=discipline, group=group)
-    cache_key = 'lessons/%s' % user.username
-    cache.delete(cache_key)
+    for academic_term in AcademicTerm.objects.filter(is_active=True):
+        cache_key = 'lessons/%s/%d' % (user.username, academic_term.pk)
+        cache.delete(cache_key)
     return HttpResponse('Ok')
 
 @login_required
@@ -502,8 +500,9 @@ def unenroll(request, timetable_id, discipline, group):
     enrollment = get_object_or_404(Enrollment, user=user, timetable__pk=timetable_id,
                                    discipline=discipline, group=group)
     enrollment.delete()
-    cache_key = 'lessons/%s' % user.username
-    cache.delete(cache_key)
+    for academic_term in AcademicTerm.objects.filter(is_active=True):
+        cache_key = 'lessons/%s/%d' % (user.username, academic_term.pk)
+        cache.delete(cache_key)
     return HttpResponse('Ok')
 
 @login_required
