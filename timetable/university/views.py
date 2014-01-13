@@ -108,6 +108,16 @@ def ical(request, url):
     response['Content-Disposition'] = 'attachment; filename=timetable.ics'
     return response
 
+def csv_export(request, version_id):
+    timetable_version = get_object_or_404(TimetableVersion, pk=version_id)
+    response = HttpResponse(
+        timetable_version.to_csv(),
+        mimetype='text/csv; charset=UTF-8')
+    response['Content-Disposition'] = 'attachment; filename=%s.csv' % (
+        str(timetable_version.timetable).replace(' ', '-'))
+    return response
+
+
 @login_required
 def edit_timetable(request, version_id):
     version = get_object_or_404(TimetableVersion, pk=version_id)

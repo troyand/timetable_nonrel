@@ -15,6 +15,7 @@
 {% endif %}
 </p>
 <a href="/edit/{{ version.pk }}/" class="btn btn-default">Редагувати</a>
+<a href="/version/csv/{{ version.pk }}/" class="btn btn-default">Скачати csv</a>
 <h4>Порівняти із іншими версіями</h4>
 <ul>
 {% for ver in all_versions %}

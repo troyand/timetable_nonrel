@@ -1,6 +1,8 @@
 #-*- coding: utf-8 -*-
 
 import colorsys
+import csv
+import cStringIO
 import datetime
 import os
 import operator
@@ -217,7 +219,26 @@ class TimetableVersion(models.Model):
             version = version.parent
         return result
 
-    def serialize_to_table_rows(self):
+    def to_csv(self):
+        items = self.timetableitem_set.all().order_by(
+            'day_number', 'lesson_number', 'pk')
+        out_file = cStringIO.StringIO()
+        csv_writer = csv.writer(out_file, quoting=csv.QUOTE_ALL,
+                                lineterminator='\n')
+        for item in items:
+            row = [
+                day_names[item.day_number].upper(),
+                lesson_times[item.lesson_number],
+                item.room or u'',
+                item.discipline,
+                item.group or u'',
+                item.lecturer or u'',
+                item.weeks,
+            ]
+            csv_writer.writerow([s.encode('utf-8') for s in row])
+        return out_file.getvalue()
+
+    def serialize_to_table_rows(self, null_char=u'Ø'):
         result = []
         items = self.timetableitem_set.all().order_by(
             'day_number', 'lesson_number', 'pk')
@@ -225,10 +246,10 @@ class TimetableVersion(models.Model):
             row = [
                 day_names[item.day_number],
                 lesson_times[item.lesson_number].split(u'-')[0],
-                item.room or u'Ø',
+                item.room or null_char,
                 item.discipline,
                 item.group or u'',
-                item.lecturer or u'Ø',
+                item.lecturer or null_char,
                 item.weeks,
             ]
             result.append(row)
