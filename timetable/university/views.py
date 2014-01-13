@@ -275,7 +275,7 @@ def compare(request, version_left, version_right):
     to_approve = (tt_version_left.timetable.active_version() == tt_version_left
                   and tt_version_left.timetable == tt_version_right.timetable
                   and not tt_version_right.approver
-                  #and tt_version_right.author != request.user
+                  and tt_version_right.author != request.user
                   )
 
     return render_to_response(
