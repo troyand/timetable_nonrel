@@ -25,7 +25,7 @@
         <td>
             {% for lesson in cell %}
             <div class="lesson">
-            <span class="label label-primary">{{ lesson.room }}</span>&nbsp;
+            {% if lesson.room %}<span class="label label-primary">{{ lesson.room }}</span>{% endif %}&nbsp;
             {{ lesson.discipline }}&nbsp;
             <span class="label" style="background-color:{{ lesson.color }}">{% if lesson.group %}Група {{ lesson.group }}{% else %}Лекція{% endif %}</span>&nbsp;
             {% if lesson.lecturer %}
