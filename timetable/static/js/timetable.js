@@ -1,3 +1,110 @@
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie != '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = jQuery.trim(cookies[i]);
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+var csrftoken = getCookie('csrftoken');
+
+function isNonNegativeNumber(n) {
+    var p = parseInt(n);
+    if (isNaN(p)) {
+        return false;
+    }
+    if (p >= 0) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+function validateWeeksRange(range) {
+    if (range == "") {
+        return false;
+    }
+    var parts = range.split(",");
+    for (var i=0; i<parts.length; i++) {
+        var part = parts[i];
+        if (part == "") {
+            return false;
+        }
+        if (part.indexOf("-") != -1) {
+            weekNumbers = part.split("-");
+            if (weekNumbers.length != 2) {
+                return false;
+            }
+            if (! isNonNegativeNumber(weekNumbers[0])) {
+                return false;
+            }
+            if (! isNonNegativeNumber(weekNumbers[1])) {
+                return false;
+            }
+        }
+        else {
+            if (! isNonNegativeNumber(part)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+function serializeItems() {
+    var result = [];
+    errorsFound = false;
+    $.each($(".item"), function(i, formItem) {
+        var item = {};
+        var itemElement = $(formItem);
+        var divId = itemElement.parent().attr("id");
+        var idParts = divId.split("-");
+        item["day_number"] = parseInt(idParts[1]);
+        item["lesson_number"] = parseInt(idParts[2]);
+        itemElement.removeClass("has-error");
+        if (!validateWeeksRange(itemElement.find(".weeks").val()) || itemElement.find(".discipline").val() == "") {
+            itemElement.addClass("has-error");
+            errorsFound = true;
+        }
+        $.each(["room", "discipline", "group", "lecturer", "weeks"], function(j, field) {
+            item[field] = itemElement.find("." + field).val() || null;
+        });
+        result.push(item);
+    });
+    if (errorsFound) {
+        $("html, body").animate({
+            scrollTop: $($(".has-error")[0]).offset().top
+        }, 500);
+        throw "Validation error";
+    }
+    return JSON.stringify(result);
+}
+
+function attachAutocomplete(node) {
+    node.find(".room").autocomplete({
+        serviceUrl:"/autocomplete/rooms/",
+        minChars:1,
+    });
+    /*node.find(".discipline").autocomplete({
+        serviceUrl:"/autocomplete/disciplines/",
+        minChars:1,
+    });*/
+    node.find(".lecturer").autocomplete({
+        serviceUrl:"/autocomplete/lecturers/",
+        minChars:1,
+    });
+}
+
+
 function validateWeeksInputKey(evt) {
     var charCode = (evt.which) ? evt.which : event.keyCode;
     if ((charCode >= 48) && (charCode <= 57)) {
@@ -10,6 +117,14 @@ function validateWeeksInputKey(evt) {
     }
     if (charCode == 45) {
         // is a dash
+        return true;
+    }
+    if (charCode == 46) {
+        // is a delete
+        return true;
+    }
+    if (charCode == 8) {
+        // is a backspace
         return true;
     }
     return false;
@@ -58,22 +173,6 @@ function goIcalTimetable(csrfToken) {
     });
 }
 
-function getCookie(name) {
-    var cookieValue = null;
-    if (document.cookie && document.cookie != '') {
-        var cookies = document.cookie.split(';');
-        for (var i = 0; i < cookies.length; i++) {
-            var cookie = jQuery.trim(cookies[i]);
-            // Does this cookie string begin with the name we want?
-            if (cookie.substring(0, name.length + 1) == (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-var csrftoken = getCookie('csrftoken');
 
 function enrollment(label) {
     var jqItem = $(label);

@@ -1,32 +1,4 @@
 <script>
-function serializeItems() {
-    var result = [];
-    errorsFound = false;
-    $.each($(".item"), function(i, formItem) {
-        var item = {};
-        var itemElement = $(formItem);
-        var divId = itemElement.parent().attr("id");
-        var idParts = divId.split("-");
-        item["day_number"] = parseInt(idParts[1]);
-        item["lesson_number"] = parseInt(idParts[2]);
-        itemElement.removeClass("has-error");
-    if (itemElement.find(".weeks").val() == "" || itemElement.find(".discipline").val() == "") {
-            itemElement.addClass("has-error");
-            errorsFound = true;
-        }
-        $.each(["room", "discipline", "group", "lecturer", "weeks"], function(j, field) {
-            item[field] = itemElement.find("." + field).val() || null;
-        });
-        result.push(item);
-    });
-    if (errorsFound) {
-        $("html, body").animate({
-            scrollTop: $($(".has-error")[0]).offset().top
-        }, 500);
-        throw "Validation error";
-    }
-    return JSON.stringify(result);
-}
 
 function submitTimetable(sender) {
     var serialized = serializeItems();
@@ -40,23 +12,8 @@ function submitTimetable(sender) {
     });
 }
 
-function attachAutocomplete(node) {
-    node.find(".room").autocomplete({
-        serviceUrl:"/autocomplete/rooms/",
-        minChars:1, 
-    });        
-    /*node.find(".discipline").autocomplete({
-        serviceUrl:"/autocomplete/disciplines/",
-        minChars:1, 
-    });*/
-    node.find(".lecturer").autocomplete({
-        serviceUrl:"/autocomplete/lecturers/",
-        minChars:1, 
-    });        
-}
-
 $(document).ready(function() {
-    var items = {{ items|safe}};
+    var items = {{ items|safe }};
     $.each(items, function(i, item) {
         var divId = "#items-" + item.day_number + "-" + item.lesson_number;
         var formClone = $("#clonable-item").clone().show().addClass("item").attr("id", "");
@@ -69,23 +26,6 @@ $(document).ready(function() {
         $(divId).append(formClone);
     });
 });
-
-function validateWeeksInputKey(evt) {
-    var charCode = (evt.which) ? evt.which : event.keyCode;
-    if ((charCode >= 48) && (charCode <= 57)) {
-        // is a digit
-        return true;
-    }
-    if (charCode == 44) {
-        // is a comma
-        return true;
-    }
-    if (charCode == 45) {
-        // is a dash
-        return true;
-    }
-    return false;
-}
 
 function addLesson(sender) {
     var formClone = $("#clonable-item").clone().show().addClass("item").attr("id", "");
