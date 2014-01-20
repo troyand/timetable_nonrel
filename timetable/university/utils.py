@@ -29,13 +29,17 @@ def get_disciplines(level, program, year, term):
             return s
 
     USIC_API_URL = 'http://api.usic.at/api/v1/courses/subjects'
-    response = requests.get(USIC_API_URL, params={
-        'level': level.replace(u'ґ', u'г'),
-        'program': program,
-        'year': year,
-        'term': term,
-        })
-    response_json = response.json()
+    try:
+        response = requests.get(USIC_API_URL, timeout=0.8, params={
+            'level': level.replace(u'ґ', u'г'),
+            'program': program,
+            'year': year,
+            'term': term,
+            })
+        response_json = response.json()
+    except requests.exceptions.RequestException:
+        #TODO log warning?
+        response_json = {}
     if not response_json:
         return []
     disciplines = []

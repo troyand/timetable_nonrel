@@ -11,9 +11,14 @@
         <input class="form-control group" style="width:80px" placeholder="Група" type="text">
         <input class="form-control lecturer" style="width:200px" placeholder="Викладач">
         <input class="form-control weeks" style="width:160px" placeholder="Тижні" onkeypress="return validateWeeksInputKey(event);">
-        <button type="button" class="btn btn-danger" onclick="deleteLesson(this);" tabindex="-1">–</button>
+        <button type="button" class="btn btn-info" onclick="copyLesson(this);" tabindex="-1">
+            <i class="fa fa-copy"></i>
+        </button>
+        <button type="button" class="btn btn-danger" onclick="deleteLesson(this);" tabindex="-1">
+            <i class="fa fa-trash-o"></i>
+        </button>
     </form>
-    <table class="table table-bordered" style="max-width:1090px; margin-left:auto; margin-right:auto">
+    <table class="table table-bordered" style="max-width:1130px; margin-left:auto; margin-right:auto">
         {% for day_number, day_name in day_names %}
             {% for lesson_number, lesson_time in lesson_times %}
                 <tr>
@@ -26,15 +31,24 @@
                     <td>
                         <div class="items" id="items-{{ day_number }}-{{ lesson_number }}">
                         </div>
-                        <div><button type="button" class="add-lesson btn btn-success" onclick="addLesson(this);">+</button></div>
+                        <div>
+                            <button type="button" class="add-lesson btn btn-success" onclick="addLesson(this);">
+                                <i class="fa fa-file-o"></i>
+                            </button>
+                            <button type="button" class="add-lesson btn btn-info" onclick="pasteLesson(this);">
+                                <i class="fa fa-paste"></i>
+                            </button>
+                        </div>
                     </td>
                 </tr>
             {% endfor %}
         {% endfor %}
-    </table>
-    <div style="padding-bottom:8px;">
+        <tr>
+            <td colspan="3">
         <textarea class="form-control" rows="3" id="remark" placeholder="Ремарка щодо редагування"></textarea>
-    </div>
+            </td>
+        </tr>
+    </table>
     <div id="check-timetable-container">
         <button type="button" class="btn btn-primary" onclick="submitTimetable(this)" id="check-timetable" data-loading-text="Обробка...">Зберегти версію розкладу</button>
     </div>

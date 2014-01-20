@@ -83,6 +83,71 @@ def my(request, week=1):
                 'active_week': week,
                 'academic_term': active_user_academic_term,
                 'weeks': range(1, active_user_academic_term.number_of_weeks + 1),
+                'href': 'my',
+                },
+            context_instance=RequestContext(request)
+            )
+
+def get_lecturer_lessons(lecturer, academic_term, cache_timeout=30):
+    cache_key = 'lessons/lecturer/%s/%d' % (lecturer, academic_term.pk)
+    # do only full surname prefix search
+    if u' ' not in lecturer:
+        lecturer += u' '
+    lessons = cache.get(cache_key)
+    if not lessons:
+        lessons = []
+        # here we will need to find the active tt versions
+        # but not for all timetables, but only for those
+        # having the necessary lecturer
+        # to avoid multiple SQL queries, keep them in the dict
+        tt_active_id_map = {}
+        items = TimetableItem.objects.select_related().filter(
+            timetable_version__timetable__academic_term=academic_term,
+            lecturer__startswith=lecturer)
+        filtered_items = []
+        for item in items:
+            tt_id = item.timetable_version.timetable.pk
+            try:
+                active_version_id = tt_active_id_map[tt_id]
+            except KeyError:
+                active_version_id = item.timetable_version.timetable.active_version().pk
+                tt_active_id_map[tt_id] = active_version_id
+            if item.timetable_version.pk == active_version_id:
+                filtered_items.append(item)
+        lessons.extend(items_to_lessons(filtered_items, academic_term))
+        cache.set(cache_key, lessons, cache_timeout)
+    return lessons
+
+def lecturer_timetable(request, lecturer, week=1):
+    week = int(week)
+    table = []
+    academic_terms = AcademicTerm.objects.filter(is_active=True)
+    active_lecturer_academic_term = academic_terms[0]
+    lessons = []
+    for academic_term in academic_terms:
+        at_lessons = get_lecturer_lessons(lecturer, academic_term)
+        if not lessons and at_lessons:
+            active_lecturer_academic_term = academic_term
+        lessons.extend(at_lessons)
+        if active_lecturer_academic_term.number_of_weeks < academic_term.number_of_weeks:
+            active_lecturer_academic_term = academic_term
+    for date in [active_lecturer_academic_term[week][i] for i in range(6)]:
+        rows = []
+        for lesson_number in sorted(lesson_times.keys()):
+            row = [lesson_times[lesson_number].split('-')[0]]
+            dt_lessons = [l for l in lessons if l.lesson_number == lesson_number and
+                          l.date == date]
+            row.append(dt_lessons)
+            rows.append(row)
+        table.append((date, rows))
+    return render_to_response(
+            'my.html',
+            {
+                'table': table,
+                'active_week': week,
+                'academic_term': active_lecturer_academic_term,
+                'weeks': range(1, active_lecturer_academic_term.number_of_weeks + 1),
+                'href': 'lecturer/timetable/%s' % lecturer,
                 },
             context_instance=RequestContext(request)
             )

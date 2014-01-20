@@ -107,6 +107,7 @@ function attachAutocomplete(node) {
 
 function validateWeeksInputKey(evt) {
     var charCode = (evt.which) ? evt.which : event.keyCode;
+    console.log(charCode);
     if ((charCode >= 48) && (charCode <= 57)) {
         // is a digit
         return true;
@@ -119,28 +120,38 @@ function validateWeeksInputKey(evt) {
         // is a dash
         return true;
     }
-    if (charCode == 46) {
-        // is a delete
-        return true;
-    }
     if (charCode == 8) {
         // is a backspace
+        return true;
+    }
+    if (charCode == 99) {
+        // copy
+        return true;
+    }
+    if (charCode == 118) {
+        // paste
         return true;
     }
     return false;
 }
 
-function addLesson(sender) {
-    var clone = $("#clonable-item").clone().show();
-    clone.insertBefore($(sender));
-    clone.find(".room").autocomplete({
-        serviceUrl:"/autocomplete/rooms/",
-        minChars:1,
-    });
+var copied = null;
+
+function copyLesson(sender) {
+    if (copied) {
+        copied.remove();
+    }
+    copied = $(sender).parent().clone().hide();
+    copied.find(".discipline").val($(sender).parent().find(".discipline").val());
 }
 
-function deleteLesson(sender) {
-    $(sender).parent().remove();
+function pasteLesson(sender) {
+    var local = copied;
+    copied = local.clone();
+    copied.find(".discipline").val(local.find(".discipline").val());
+    local.show();
+    attachAutocomplete(local);
+    $(sender).parent().parent().find(".items").append(local);
 }
 
 function goRenderTimetable(csrfToken) {
