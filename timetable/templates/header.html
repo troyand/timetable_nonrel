@@ -4,9 +4,9 @@
         <li{% if page == "info" %} class="active"{% endif %}><a href="/info/">Інфо</a></li>
         {% if user.is_authenticated %}
         <li{% if page == "profile" %} class="active"{% endif %}><a href="/accounts/profile/">{{ user }}</a></li>
-        <li><a href="/accounts/logout/">Вихід</a></li>
+        <li><a href="/accounts/logout/"><i class="fa fa-sign-out"></i> Вихід</a></li>
         {% else %}
-        <li><a href="/accounts/login/">Вхід</a></li>
+        <li><a href="/accounts/login/"><i class="fa fa-sign-in"></i> Вхід</a></li>
         {% endif %}
     </ul>
     <h3 class="text-muted">USIC-Розклад</h3>

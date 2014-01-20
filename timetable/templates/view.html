@@ -21,9 +21,12 @@
         <hr>
     </div>
     {% endfor %}
-    <a href="/upload/{{ timetable.pk }}/" class="btn btn-default">Завантажити csv</a>
-    <a href="/edit/{{ version.pk }}/" class="btn btn-default">Редагувати активну версію</a>
-    <a href="/version/csv/{{ version.pk }}/" class="btn btn-default">Скачати csv активної версії</a>
+    <a href="/upload/{{ timetable.pk }}/" class="btn btn-default">
+        <i class="fa fa-cloud-upload"></i> Завантажити csv</a>
+    <a href="/edit/{{ version.pk }}/" class="btn btn-default">
+        <i class="fa fa-pencil"></i> Редагувати активну версію</a>
+    <a href="/version/csv/{{ version.pk }}/" class="btn btn-default">
+        <i class="fa fa-cloud-download"></i> Скачати csv активної версії</a>
     <div><a id="ical-link" style="display:none">Посилання на iCal</a></div>
     <hr>
     <h6>Всі версії розкладу</h6>

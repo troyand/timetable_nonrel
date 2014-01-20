@@ -488,6 +488,7 @@ def info(request):
     return render_to_response(
         'info.html',
         {
+            'page': 'info',
         },
         context_instance=RequestContext(request)
     )
