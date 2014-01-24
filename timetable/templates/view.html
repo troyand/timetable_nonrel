@@ -1,4 +1,8 @@
 {% extends "jumbo.html" %}
+{% block title %}{{ timetable }} – {{ timetable.academic_term.season }} {{ timetable.academic_term.kind }} - {% endblock %}
+{% block head %}
+<meta name="description" content="{% for discipline, groups in discipline_group_list %}{{ discipline }}. {% empty %}Порожній розклад{% endfor %}">
+{% endblock %}
 {% block body %}
 <h2>{{ timetable }} – {{ timetable.academic_term.season }} {{ timetable.academic_term.kind }} {{ timetable.academic_term.year }}-{{ timetable.academic_term.year|add:"1" }}</h2>
     {% for discipline, groups in discipline_group_list %}

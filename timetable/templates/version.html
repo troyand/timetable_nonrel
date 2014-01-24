@@ -1,4 +1,8 @@
 {% extends "jumbo.html" %}
+{% block title %}{{ timetable }} – {{ timetable.academic_term.season }} {{ timetable.academic_term.kind }} від {{ version.create_date }} - {% endblock %}
+{% block head %}
+<meta name="robots" content="noindex">
+{% endblock %}
 {% block body %}
 <h2>{{ timetable }} – {{ timetable.academic_term.season }} {{ timetable.academic_term.kind }} {{ timetable.academic_term.year }}-{{ timetable.academic_term.year|add:"1" }}</h2>
 {% if version == active_version %}
