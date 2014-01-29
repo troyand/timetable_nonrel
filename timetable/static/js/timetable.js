@@ -107,7 +107,6 @@ function attachAutocomplete(node) {
 
 function validateWeeksInputKey(evt) {
     var charCode = (evt.which) ? evt.which : event.keyCode;
-    console.log(charCode);
     if ((charCode >= 48) && (charCode <= 57)) {
         // is a digit
         return true;
