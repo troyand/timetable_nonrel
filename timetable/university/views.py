@@ -474,10 +474,13 @@ def home(request):
                     timetable.major.kind, {}).setdefault(
                         timetable.year, timetable)
     faculty_major_kind_tt_list = itemize(faculty_major_kind_tt_map)
+    recent_modifications = TimetableVersion.objects.select_related().order_by(
+        '-create_date').all()[:20]
     return render_to_response(
             'jumbo.html',
             {
                 'faculty_major_kind_tt_list': faculty_major_kind_tt_list,
+                'recent_modifications': recent_modifications,
                 'timetables': timetables,
                 'page': 'index',
                 },

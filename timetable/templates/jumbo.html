@@ -79,6 +79,23 @@
     {% endfor %}
     </div>
 {% endfor %}
+<hr>
+</div>
+<div>
+    <h3>Останні редагування</h3>
+    <ul>
+    {% for ver in recent_modifications %}
+    <li>
+    <a href="/tt/{{ ver.timetable.pk }}/">{{ ver.timetable }}</a> —
+    <a href="/version/{{ ver.pk }}/">{{ ver.create_date|timesince }} тому</a> (<i>{{ ver.author }}</i>)
+    {% if ver.approver %}
+    <span class="label label-success"><i class="fa fa-check"></i></span>
+    {% else %}
+    <span class="label label-warning"><i class="fa fa-spinner"></i></span>
+    {% endif %}
+    </li>
+    {% endfor %}
+    </ul>
 </div>
       </div>
 
