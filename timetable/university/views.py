@@ -20,7 +20,7 @@ from django.utils import formats
 from django.utils import timezone
 
 from timetable.university.models import *
-from timetable.university.utils import get_potential_duplicates, get_disciplines, lessons_to_events, academic_terms_to_events, table_diff_lines
+from timetable.university.utils import get_disciplines, lessons_to_events, academic_terms_to_events, table_diff_lines
 
 
 def filter_items_by_enrollments(items, enrollments):

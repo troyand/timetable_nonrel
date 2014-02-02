@@ -1,23 +1,12 @@
 #-*- coding: utf-8 -*-
 
 import datetime
-import jellyfish
 import icalendar
 import itertools
 import pytz
 import requests
 from unidecode import unidecode
 
-
-def get_potential_duplicates(strings):
-    dups = set()
-    for string_a, string_b in itertools.combinations(strings, 2):
-        jaro_distance =  jellyfish.jaro_distance(
-                unidecode(string_a or ''), unidecode(string_b or ''))
-        if 0.9 < jaro_distance < 1:
-            dups.add(string_a)
-            dups.add(string_b)
-    return dups
 
 def get_disciplines(level, program, year, term):
     def clean_parentheses(s):

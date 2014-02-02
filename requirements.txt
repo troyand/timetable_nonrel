@@ -1,7 +1,6 @@
-Django==1.5.2
-Unidecode==0.04.14
-jellyfish==0.2.0
+Django==1.6.1
+Unidecode
 icalendar
 requests
-wsgiref==0.1.2
+wsgiref
 -e git+https://github.com/troyand/django-usic-sso.git#egg=django_usic_sso
