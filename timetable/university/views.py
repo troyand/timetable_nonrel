@@ -12,7 +12,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.db import transaction
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden, HttpResponseNotAllowed
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template import RequestContext
 from django.utils.datastructures import MultiValueDictKeyError
@@ -564,6 +564,8 @@ def version(request, version_id):
 
 @login_required
 def enroll(request, timetable_id, discipline, group):
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
     user = request.user
     timetable = get_object_or_404(Timetable, pk=timetable_id)
     Enrollment.objects.create(user=user, timetable=timetable,
@@ -575,6 +577,8 @@ def enroll(request, timetable_id, discipline, group):
 
 @login_required
 def unenroll(request, timetable_id, discipline, group):
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
     user = request.user
     enrollment = get_object_or_404(Enrollment, user=user, timetable__pk=timetable_id,
                                    discipline=discipline, group=group)
