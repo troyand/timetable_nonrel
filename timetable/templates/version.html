@@ -12,7 +12,7 @@
 {% if version.approver %}
 <p>Затверджено {{ version.approve_date }}, {{ version.approver }}</p>
 {% else %}
-<p>До розгляду</p>
+<p>До розгляду — очікує затвердження</p>
 {% endif %}
 {% if version.remark %}
 <blockquote><p>{{ version.remark }}</p></blockquote>
