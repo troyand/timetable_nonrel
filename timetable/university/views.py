@@ -83,6 +83,7 @@ def my(request, week=1):
                 'active_week': week,
                 'academic_term': active_user_academic_term,
                 'weeks': range(1, active_user_academic_term.number_of_weeks + 1),
+                'page': 'my',
                 'href': 'my',
                 },
             context_instance=RequestContext(request)
