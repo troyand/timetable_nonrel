@@ -240,7 +240,7 @@ def submit_timetable(request, version_id):
             item.save()
         return HttpResponse(json.dumps({
             'status': 'ok',
-            'redirect_url': '/compare/%d/%d/' % (timetable_version.pk, new_version.pk),
+            'redirect_url': '/version/%d/' % new_version.pk,
             }))
 
 
