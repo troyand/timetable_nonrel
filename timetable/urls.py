@@ -33,6 +33,8 @@ urlpatterns = patterns('',
     url(r'^autocomplete/rooms/$', 'timetable.university.views.autocomplete_rooms'),
     url(r'^autocomplete/disciplines/$', 'timetable.university.views.autocomplete_disciplines'),
     url(r'^autocomplete/lecturers/$', 'timetable.university.views.autocomplete_lecturers'),
+    url(r'^list/rooms/$', 'timetable.university.views.list_rooms'),
+    url(r'^list/lecturers/$', 'timetable.university.views.list_lecturers'),
     # url(r'^timetable/', include('timetable.foo.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:

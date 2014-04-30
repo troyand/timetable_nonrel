@@ -637,3 +637,12 @@ def autocomplete_disciplines(request):
 
 def autocomplete_lecturers(request):
     return autocomplete(request, all_lecturers)
+
+def get_list(request, dataset):
+    return HttpResponse(json.dumps(dataset))
+
+def list_rooms(request):
+    return get_list(request, all_rooms)
+
+def list_lecturers(request):
+    return get_list(request, all_lecturers)
