@@ -639,10 +639,15 @@ def autocomplete_lecturers(request):
     return autocomplete(request, all_lecturers)
 
 def get_list(request, dataset):
-    return HttpResponse(json.dumps(dataset))
+    return HttpResponse(json.dumps(dataset),
+                        content_type='application/json')
 
 def list_rooms(request):
     return get_list(request, all_rooms)
 
 def list_lecturers(request):
     return get_list(request, all_lecturers)
+
+def list_majors(request):
+    majors = sorted([m.name for m in Major.objects.all()])
+    return get_list(request, majors)
