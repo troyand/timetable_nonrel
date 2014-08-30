@@ -465,8 +465,8 @@ def home(request):
             result_list.append((k, itemize(d[k])))
         return result_list
 
-    #TODO: add active academic term filtering
-    timetables = Timetable.objects.select_related().all()
+    timetables = Timetable.objects.select_related().filter(
+        academic_term__is_active=True)
     faculty_major_kind_tt_map = {}
     for timetable in timetables:
         faculty_major_kind_tt_map.setdefault(
