@@ -4,3 +4,8 @@ icalendar
 requests
 wsgiref
 -e git+https://github.com/troyand/django-usic-sso.git#egg=django_usic_sso
+# The following three requirements added for pre-2.7.9 Python fix in requests to support HTTPS.
+# Before installing, issue apt-get install libffi-dev libssl-dev
+pyopenssl
+ndg-httpsclient
+pyasn1
